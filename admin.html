@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>나아정 캠핑장 관리자</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Noto+Sans+KR:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-dark: #2D4A2D;
+    --green-mid: #4A7C59;
+    --green-light: #7BAE8A;
+    --green-pale: #EAF2EC;
+    --cream: #F4F6F4;
+    --border: #D4E0D4;
+    --text-dark: #1E2D1E;
+    --text-mid: #4A5A4A;
+    --text-light: #7A8A7A;
+    --white: #FFFFFF;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans KR', sans-serif; background: var(--cream); color: var(--text-dark); min-height: 100vh; }
+
+  /* 로그인 화면 */
+  .login-wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--green-dark);
+  }
+  .login-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  }
+  .login-logo {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--green-dark);
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .login-sub { font-size: 13px; color: var(--text-light); text-align: center; margin-bottom: 28px; }
+  .login-group { margin-bottom: 14px; }
+  .login-group label { display: block; font-size: 13px; font-weight: 500; color: var(--text-mid); margin-bottom: 6px; }
+  .login-group input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--cream);
+  }
+  .login-group input:focus { outline: none; border-color: var(--green-mid); }
+  .login-btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--green-dark);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .login-btn:hover { background: var(--green-mid); }
+  .login-hint { font-size: 12px; color: var(--text-light); text-align: center; margin-top: 14px; }
+
+  /* 관리자 레이아웃 */
+  .admin-wrap { display: none; }
+  .admin-wrap.active { display: block; }
+
+  /* 사이드바 */
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 220px;
+    background: var(--green-dark);
+    color: var(--white);
+    padding: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-logo {
+    padding: 24px 20px;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 17px;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .sidebar-logo span { display: block; font-family: 'Noto Sans KR', sans-serif; font-size: 11px; font-weight: 300; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .sidebar-nav { padding: 16px 12px; flex: 1; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 4px;
+    transition: background 0.2s;
+    color: rgba(255,255,255,0.75);
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.08); color: var(--white); }
+  .nav-item.active { background: rgba(255,255,255,0.15); color: var(--white); font-weight: 500; }
+  .sidebar-logout {
+    padding: 16px 12px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  .logout-btn {
+    width: 100%;
+    padding: 9px;
+    background: transparent;
+    color: rgba(255,255,255,0.5);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .logout-btn:hover { background: rgba(255,255,255,0.08); color: var(--white); }
+
+  /* 메인 컨텐츠 */
+  .admin-main {
+    margin-left: 220px;
+    padding: 28px 32px;
+    min-height: 100vh;
+  }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .page-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--green-dark);
+    margin-bottom: 6px;
+  }
+  .page-sub { font-size: 13px; color: var(--text-light); margin-bottom: 24px; }
+
+  /* 통계 카드 */
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .stat-label { font-size: 12px; color: var(--text-light); margin-bottom: 8px; }
+  .stat-value { font-size: 26px; font-weight: 600; color: var(--green-dark); }
+  .stat-unit { font-size: 14px; font-weight: 400; margin-left: 2px; }
+  .stat-sub { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+
+  /* 필터 바 */
+  .filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-bar select,
+  .filter-bar input {
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    background: var(--white);
+    font-family: 'Noto Sans KR', sans-serif;
+    color: var(--text-dark);
+  }
+  .filter-search {
+    flex: 1;
+    min-width: 180px;
+  }
+
+  /* 테이블 */
+  .table-wrap {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    background: var(--green-pale);
+    padding: 11px 14px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--green-dark);
+    font-size: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 13px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #FAFCFA; }
+
+  /* 뱃지 */
+  .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .badge-wait { background: #FFF8E1; color: #F57F17; }
+  .badge-ok { background: var(--green-pale); color: var(--green-dark); }
+  .badge-done { background: #E3F2FD; color: #1565C0; }
+  .badge-cancel { background: #FFEBEE; color: #C62828; }
+
+  /* 액션 버튼 */
+  .action-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    border: none;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500;
+    margin-right: 4px;
+    transition: opacity 0.2s;
+  }
+  .action-btn:hover { opacity: 0.8; }
+  .btn-approve { background: var(--green-dark); color: var(--white); }
+  .btn-cancel-r { background: #FFEBEE; color: #C62828; }
+  .btn-detail { background: var(--green-pale); color: var(--green-dark); }
+
+  /* 모달 */
+  .modal-bg {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 28px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--green-dark);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-label { color: var(--text-mid); }
+  .detail-val { font-weight: 500; color: var(--text-dark); }
+  .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+  .modal-btn {
+    flex: 1;
+    padding: 11px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .modal-btn-primary { background: var(--green-dark); color: var(--white); }
+  .modal-btn-secondary { background: var(--cream); color: var(--text-dark); border: 1px solid var(--border); }
+
+  /* 달력 뷰 */
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .cal-nav { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; cursor: pointer; font-family: 'Noto Sans KR', sans-serif; font-size: 13px; }
+  .cal-day-name { text-align: center; font-size: 12px; color: var(--text-light); padding: 6px 0; font-weight: 500; }
+  .cal-cell {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px;
+    min-height: 72px;
+    font-size: 12px;
+  }
+  .cal-cell.today { border-color: var(--green-mid); }
+  .cal-cell.other-month { background: var(--cream); }
+  .cal-date { font-weight: 500; font-size: 13px; margin-bottom: 4px; }
+  .cal-booking { background: var(--green-pale); color: var(--green-dark); border-radius: 3px; padding: 1px 4px; font-size: 10px; margin-bottom: 2px; cursor: pointer; }
+  .cal-booking:hover { background: var(--green-light); }
+
+  /* 사이트 현황 */
+  .site-status-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .site-status-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .site-status-card:hover { border-color: var(--green-mid); }
+  .site-status-card.occupied { background: var(--green-pale); border-color: var(--green-mid); }
+  .site-num-big { font-size: 20px; font-weight: 700; color: var(--green-dark); }
+  .site-status-label { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+  .site-guest { font-size: 12px; color: var(--green-dark); font-weight: 500; margin-top: 2px; }
+
+  /* 설정 탭 */
+  .set-tab {
+    padding: 9px 20px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    background: var(--white);
+    color: var(--text-mid);
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: all 0.15s;
+  }
+  .set-tab:hover { border-color: var(--green-mid); color: var(--green-dark); }
+  .set-tab.active { background: var(--green-dark); color: var(--white); border-color: var(--green-dark); }
+
+  /* 사이트 토글 카드 */
+  .site-toggle-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--white);
+  }
+  .site-toggle-card.available { border-color: var(--green-mid); background: var(--green-pale); }
+  .site-toggle-card.blocked { border-color: #FFCDD2; background: #FFF5F5; }
+  .site-toggle-card .stc-num { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .site-toggle-card.available .stc-num { color: var(--green-dark); }
+  .site-toggle-card.blocked .stc-num { color: #C62828; }
+  .site-toggle-card .stc-label { font-size: 12px; font-weight: 500; }
+  .site-toggle-card.available .stc-label { color: var(--green-mid); }
+  .site-toggle-card.blocked .stc-label { color: #C62828; }
+  .stc-toggle {
+    display: inline-block;
+    margin-top: 8px;
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .stc-toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    transition: left 0.2s;
+  }
+  .site-toggle-card.available .stc-toggle { background: var(--green-mid); }
+  .site-toggle-card.available .stc-toggle::after { left: 18px; }
+  .site-toggle-card.blocked .stc-toggle { background: #EF9A9A; }
+  .site-toggle-card.blocked .stc-toggle::after { left: 2px; }
+
+  /* 모바일 하단 네비게이션 바 */
+  .mobile-nav {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--green-dark);
+    z-index: 200;
+    padding: 0;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.15);
+  }
+  .mobile-nav-inner {
+    display: flex;
+    justify-content: space-around;
+    align-items: stretch;
+  }
+  .mobile-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 4px 12px;
+    cursor: pointer;
+    color: rgba(255,255,255,0.55);
+    font-size: 10px;
+    gap: 4px;
+    transition: color 0.15s;
+    border: none;
+    background: none;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .mobile-nav-item.active { color: var(--white); }
+  .mobile-nav-item span:first-child { font-size: 20px; }
+
+  @media (max-width: 768px) {
+    /* 사이드바 완전 숨김 → 하단 네비로 대체 */
+    .sidebar { display: none; }
+    .admin-main { margin-left: 0; padding: 16px 12px 80px; }
+    .mobile-nav { display: block; }
+
+    /* 통계 카드 2열 */
+    .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+    .stat-card { padding: 14px; }
+    .stat-value { font-size: 22px; }
+    .stat-label { font-size: 11px; }
+    .stat-sub { font-size: 11px; }
+
+    /* 페이지 타이틀 */
+    .page-title { font-size: 18px; }
+    .page-sub { font-size: 12px; margin-bottom: 16px; }
+
+    /* 테이블 — 모바일에서 카드형으로 전환 */
+    .table-wrap { border-radius: var(--radius); overflow: hidden; }
+    table { font-size: 12px; }
+    th { padding: 9px 8px; font-size: 11px; }
+    td { padding: 10px 8px; }
+
+    /* 예약 테이블 일부 컬럼 숨김 */
+    .hide-mobile { display: none; }
+
+    /* 필터 바 */
+    .filter-bar { gap: 8px; }
+    .filter-bar select,
+    .filter-bar input { font-size: 13px; padding: 8px 10px; }
+    .filter-search { min-width: 100%; }
+
+    /* 달력 */
+    .cal-cell { min-height: 52px; padding: 4px; }
+    .cal-date { font-size: 12px; }
+    .cal-booking { font-size: 9px; padding: 1px 3px; }
+    .cal-day-name { font-size: 11px; }
+
+    /* 사이트 그리드 */
+    .site-status-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .site-status-card { padding: 12px 8px; }
+    .site-num-big { font-size: 16px; }
+
+    /* 설정 탭 */
+    .set-tab { padding: 8px 14px; font-size: 12px; }
+
+    /* 모달 */
+    .modal { padding: 20px 16px; margin: 0 12px; }
+    .modal-title { font-size: 15px; }
+    .detail-row { font-size: 13px; padding: 7px 0; }
+
+    /* 로그인 카드 */
+    .login-card { padding: 32px 24px; margin: 16px; }
+
+    /* 액션 버튼 */
+    .action-btn { padding: 5px 8px; font-size: 11px; margin-right: 2px; }
+  }
+
+  @media (max-width: 900px) and (min-width: 769px) {
+    .sidebar { width: 60px; }
+    .sidebar-logo, .nav-item span, .sidebar-logout { display: none; }
+    .admin-main { margin-left: 60px; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- 로그인 화면 -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:20px;">
+      <div style="position:relative;width:100px;height:65px;">
+        <svg width="100" height="65" viewBox="0 0 680 420" xmlns="http://www.w3.org/2000/svg">
+          <line x1="340" y1="100" x2="184" y2="190" stroke="#2D4A2D" stroke-width="14" stroke-linecap="round"/>
+          <line x1="340" y1="100" x2="496" y2="190" stroke="#2D4A2D" stroke-width="14" stroke-linecap="round"/>
+          <line x1="184" y1="190" x2="184" y2="250" stroke="#2D4A2D" stroke-width="14" stroke-linecap="round"/>
+          <line x1="496" y1="190" x2="496" y2="250" stroke="#2D4A2D" stroke-width="14" stroke-linecap="round"/>
+          <line x1="184" y1="250" x2="262" y2="145" stroke="#2D4A2D" stroke-width="14" stroke-linecap="round"/>
+          <line x1="496" y1="250" x2="418" y2="145" stroke="#2D4A2D" stroke-width="14" stroke-linecap="round"/>
+        </svg>
+        <div style="position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-family:'Noto Serif KR',serif;font-size:14px;font-weight:300;color:#2D4A2D;letter-spacing:.1em;display:flex;gap:2px;white-space:nowrap;">
+          <span>나</span><span style="font-weight:200;">아</span><span>정</span>
+        </div>
+      </div>
+    </div>
+    <div class="login-sub">관리자 페이지</div>
+    <div class="login-group">
+      <label>아이디</label>
+      <input type="text" id="loginId" placeholder="admin" value="admin">
+    </div>
+    <div class="login-group">
+      <label>비밀번호</label>
+      <input type="password" id="loginPw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">로그인</button>
+    <div class="login-hint">기본 계정: admin / 1234 (나중에 변경하세요)</div>
+  </div>
+</div>
+
+<!-- 관리자 화면 -->
+<div class="admin-wrap" id="adminWrap">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div style="position:relative;width:64px;height:42px;margin-bottom:4px;">
+        <svg width="64" height="42" viewBox="0 0 680 420" xmlns="http://www.w3.org/2000/svg">
+          <line x1="340" y1="100" x2="184" y2="190" stroke="rgba(255,255,255,0.9)" stroke-width="14" stroke-linecap="round"/>
+          <line x1="340" y1="100" x2="496" y2="190" stroke="rgba(255,255,255,0.9)" stroke-width="14" stroke-linecap="round"/>
+          <line x1="184" y1="190" x2="184" y2="250" stroke="rgba(255,255,255,0.9)" stroke-width="14" stroke-linecap="round"/>
+          <line x1="496" y1="190" x2="496" y2="250" stroke="rgba(255,255,255,0.9)" stroke-width="14" stroke-linecap="round"/>
+          <line x1="184" y1="250" x2="262" y2="145" stroke="rgba(255,255,255,0.9)" stroke-width="14" stroke-linecap="round"/>
+          <line x1="496" y1="250" x2="418" y2="145" stroke="rgba(255,255,255,0.9)" stroke-width="14" stroke-linecap="round"/>
+        </svg>
+        <div style="position:absolute;bottom:2px;left:50%;transform:translateX(-50%);font-family:'Noto Serif KR',serif;font-size:10px;font-weight:300;color:rgba(255,255,255,.9);letter-spacing:.08em;display:flex;gap:1px;white-space:nowrap;">
+          <span>나</span><span style="font-weight:200;">아</span><span>정</span>
+        </div>
+      </div>
+      <span style="display:block;font-family:'Noto Sans KR',sans-serif;font-size:11px;font-weight:300;color:rgba(255,255,255,0.5);margin-top:2px;">관리자 대시보드</span>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-item active" onclick="showPage('dashboard', this)"><span>📊</span><span>대시보드</span></div>
+      <div class="nav-item" onclick="showPage('reservations', this)"><span>📋</span><span>예약 관리</span></div>
+      <div class="nav-item" onclick="showPage('calendar', this)"><span>📅</span><span>달력 뷰</span></div>
+      <div class="nav-item" onclick="showPage('sites', this)"><span>⛺</span><span>사이트 현황</span></div>
+      <div class="nav-item" onclick="showPage('settings', this)"><span>⚙️</span><span>설정</span></div>
+    </div>
+    <div class="sidebar-logout">
+      <button class="logout-btn" onclick="doLogout()">로그아웃</button>
+    </div>
+  </div>
+
+  <div class="admin-main">
+
+    <!-- 대시보드 -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-title">대시보드</div>
+      <div class="page-sub" id="todayDate"></div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">이번 달 예약</div>
+          <div class="stat-value"><span id="stat-monthly">0</span><span class="stat-unit">건</span></div>
+          <div class="stat-sub">이번 달 신청 기준</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">입금 대기</div>
+          <div class="stat-value" style="color:#F57F17"><span id="stat-pending">0</span><span class="stat-unit">건</span></div>
+          <div class="stat-sub">승인 필요</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">오늘 입실</div>
+          <div class="stat-value"><span id="stat-today">0</span><span class="stat-unit">팀</span></div>
+          <div class="stat-sub" id="stat-today-sites">없음</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">이번 달 매출</div>
+          <div class="stat-value"><span id="stat-sales">0원</span></div>
+          <div class="stat-sub">확정 예약 기준</div>
+        </div>
+      </div>
+
+      <div style="font-size:15px;font-weight:600;color:var(--green-dark);margin-bottom:14px;">⚠️ 승인 대기 예약</div>
+      <div class="table-wrap" style="margin-bottom:28px;">
+        <table>
+          <thead><tr><th>예약번호</th><th>예약자</th><th class="hide-mobile">연락처</th><th>사이트</th><th>입실</th><th class="hide-mobile">박수</th><th>금액</th><th>처리</th></tr></thead>
+          <tbody id="pendingTableBody"></tbody>
+        </table>
+      </div>
+
+      <div style="font-size:15px;font-weight:600;color:var(--green-dark);margin-bottom:14px;">📋 최근 예약</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>예약번호</th><th>예약자</th><th>사이트</th><th>입실</th><th>퇴실</th><th>인원</th><th>금액</th><th>상태</th></tr></thead>
+          <tbody id="recentTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 예약 관리 -->
+    <div class="page" id="page-reservations">
+      <div class="page-title">예약 관리</div>
+      <div class="page-sub">전체 예약 내역을 관리합니다</div>
+
+      <div class="filter-bar">
+        <select id="filterStatus" onchange="renderReservations()">
+          <option value="">전체 상태</option>
+          <option value="대기">입금 대기</option>
+          <option value="확정">예약 확정</option>
+          <option value="완료">이용 완료</option>
+          <option value="취소">취소됨</option>
+        </select>
+        <input type="month" id="filterMonth" onchange="renderReservations()">
+        <input class="filter-search" type="text" id="filterSearch" placeholder="예약자 이름 또는 연락처 검색" oninput="renderReservations()">
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>예약번호</th><th>예약자</th><th class="hide-mobile">연락처</th><th>사이트</th><th>입실</th><th class="hide-mobile">퇴실</th><th class="hide-mobile">인원</th><th>금액</th><th>상태</th><th>처리</th></tr></thead>
+          <tbody id="allTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 달력 뷰 -->
+    <div class="page" id="page-calendar">
+      <div class="page-title">달력 뷰</div>
+      <div class="page-sub">날짜별 예약 현황을 확인합니다</div>
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:24px;">
+        <div class="cal-header">
+          <button class="cal-nav" onclick="changeMonth(-1)">← 이전</button>
+          <div style="font-size:16px;font-weight:600;color:var(--green-dark)" id="calMonthTitle"></div>
+          <button class="cal-nav" onclick="changeMonth(1)">다음 →</button>
+        </div>
+        <div class="calendar-grid" id="calGrid"></div>
+      </div>
+    </div>
+
+    <!-- 사이트 현황 -->
+    <div class="page" id="page-sites">
+      <div class="page-title">사이트 현황</div>
+      <div class="page-sub">오늘 기준 사이트별 예약 현황입니다</div>
+      <div class="site-status-grid" id="siteStatusGrid"></div>
+    </div>
+
+    <!-- 설정 -->
+    <div class="page" id="page-settings">
+      <div class="page-title">설정</div>
+      <div class="page-sub">요금 및 사이트를 관리합니다</div>
+
+      <!-- 설정 탭 -->
+      <div style="display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;">
+        <button class="set-tab active" onclick="switchSetTab('price',this)">💰 요금 설정</button>
+        <button class="set-tab" onclick="switchSetTab('sitemgr',this)">⛺ 사이트 관리</button>
+        <button class="set-tab" onclick="switchSetTab('calcal',this)">📅 달력으로 설정</button>
+        <button class="set-tab" onclick="switchSetTab('basic',this)">📋 기본 정보</button>
+      </div>
+
+      <!-- 요금 설정 -->
+      <div id="set-price" class="set-panel">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:900px;">
+          <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:24px;">
+            <div style="font-size:14px;font-weight:600;color:var(--green-dark);margin-bottom:4px;">기본 요금</div>
+            <div style="font-size:12px;color:var(--text-light);margin-bottom:16px;">날짜별 특별 요금이 없을 때 적용</div>
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div>
+                <label style="font-size:13px;font-weight:500;color:var(--text-mid);display:block;margin-bottom:6px;">평일 (월~목, 일)</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input id="cfg-weekday" type="number" step="1000" style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:15px;font-family:inherit;" value="50000">
+                  <span style="font-size:13px;color:var(--text-mid);">원</span>
+                </div>
+              </div>
+              <div>
+                <label style="font-size:13px;font-weight:500;color:var(--text-mid);display:block;margin-bottom:6px;">주말 (금, 토) · 공휴일 전날</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input id="cfg-weekend" type="number" step="1000" style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:15px;font-family:inherit;" value="65000">
+                  <span style="font-size:13px;color:var(--text-mid);">원</span>
+                </div>
+              </div>
+              <div>
+                <label style="font-size:13px;font-weight:500;color:var(--text-mid);display:block;margin-bottom:6px;">연박 할인 (2박 이상, 1박당)</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input id="cfg-discount" type="number" step="1000" style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:15px;font-family:inherit;" value="5000">
+                  <span style="font-size:13px;color:var(--text-mid);">원 할인</span>
+                </div>
+              </div>
+            </div>
+            <div style="background:var(--green-pale);border-radius:8px;padding:12px;margin-top:14px;font-size:13px;color:var(--text-mid);line-height:1.8;" id="pricePreview"></div>
+            <button onclick="savePriceConfig()" style="margin-top:14px;width:100%;padding:11px;background:var(--green-dark);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">저장</button>
+          </div>
+
+          <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:24px;">
+            <div style="font-size:14px;font-weight:600;color:var(--green-dark);margin-bottom:4px;">날짜별 특별 요금</div>
+            <div style="font-size:12px;color:var(--text-light);margin-bottom:16px;">성수기·비수기 등 특정 기간에 다른 요금 적용</div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div>
+                  <label style="font-size:12px;font-weight:500;color:var(--text-mid);display:block;margin-bottom:4px;">시작일</label>
+                  <input type="date" id="special-start" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+                </div>
+                <div>
+                  <label style="font-size:12px;font-weight:500;color:var(--text-mid);display:block;margin-bottom:4px;">종료일</label>
+                  <input type="date" id="special-end" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+                </div>
+              </div>
+              <div>
+                <label style="font-size:12px;font-weight:500;color:var(--text-mid);display:block;margin-bottom:4px;">적용 요금 (원/박)</label>
+                <input type="number" id="special-price" step="1000" placeholder="예: 80000" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;">
+              </div>
+              <div>
+                <label style="font-size:12px;font-weight:500;color:var(--text-mid);display:block;margin-bottom:4px;">메모 (선택)</label>
+                <input type="text" id="special-memo" placeholder="예: 여름 성수기" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+              </div>
+            </div>
+            <button onclick="addSpecialPrice()" style="width:100%;padding:10px;background:var(--green-mid);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ 특별 요금 추가</button>
+            <div style="margin-top:14px;" id="specialPriceList"></div>
+          </div>
+        </div>
+
+        <!-- 요금 달력 미리보기 -->
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-top:20px;max-width:900px;">
+          <div style="font-size:14px;font-weight:600;color:var(--green-dark);margin-bottom:14px;">📅 요금 달력 미리보기</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <button class="cal-nav" onclick="changePriceCalMonth(-1)">← 이전</button>
+            <span style="font-size:15px;font-weight:600;color:var(--green-dark);" id="priceCalTitle"></span>
+            <button class="cal-nav" onclick="changePriceCalMonth(1)">다음 →</button>
+          </div>
+          <div style="display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:5px;font-size:12px;"><div style="width:12px;height:12px;border-radius:3px;background:#EAF2EC;border:1px solid #4A7C59;"></div>평일</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:12px;"><div style="width:12px;height:12px;border-radius:3px;background:#FFF3E0;border:1px solid #E65100;"></div>주말·공휴일 전날</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:12px;"><div style="width:12px;height:12px;border-radius:3px;background:#E3F2FD;border:1px solid #1565C0;"></div>특별 요금</div>
+          </div>
+          <div class="calendar-grid" id="priceCalGrid"></div>
+        </div>
+      </div>
+
+      <!-- 사이트 관리 -->
+      <div id="set-sitemgr" class="set-panel" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:900px;">
+          <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:24px;">
+            <div style="font-size:14px;font-weight:600;color:var(--green-dark);margin-bottom:4px;">날짜별 예약 불가 설정</div>
+            <div style="font-size:12px;color:var(--text-light);margin-bottom:14px;">특정 기간에 특정 사이트를 예약 불가로 설정</div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div>
+                  <label style="font-size:12px;font-weight:500;color:var(--text-mid);display:block;margin-bottom:4px;">시작일</label>
+                  <input type="date" id="block-start" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+                </div>
+                <div>
+                  <label style="font-size:12px;font-weight:500;color:var(--text-mid);display:block;margin-bottom:4px;">종료일</label>
+                  <input type="date" id="block-end" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+                </div>
+              </div>
+              <div>
+                <label style="font-size:12px;font-weight:500;color:var(--text-mid);display:block;margin-bottom:6px;">사이트 선택 (복수 선택 가능)</label>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;" id="blockSiteSelect"></div>
+              </div>
+              <div>
+                <label style="font-size:12px;font-weight:500;color:var(--text-mid);display:block;margin-bottom:4px;">사유 (선택)</label>
+                <input type="text" id="block-memo" placeholder="예: 청소, 시설 점검" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+              </div>
+            </div>
+            <button onclick="addBlockPeriod()" style="width:100%;padding:10px;background:#C62828;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ 예약 불가 추가</button>
+            <div style="margin-top:14px;" id="blockPeriodList"></div>
+          </div>
+
+          <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:24px;">
+            <div style="font-size:14px;font-weight:600;color:var(--green-dark);margin-bottom:14px;">📅 예약 불가 달력</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <button class="cal-nav" onclick="changeBlockCalMonth(-1)">← 이전</button>
+              <span style="font-size:14px;font-weight:600;color:var(--green-dark);" id="blockCalTitle"></span>
+              <button class="cal-nav" onclick="changeBlockCalMonth(1)">다음 →</button>
+            </div>
+            <div class="calendar-grid" id="blockCalGrid"></div>
+            <div id="blockCalDetail" style="margin-top:12px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 📅 달력으로 설정 (통합 달력) -->
+      <div id="set-calcal" class="set-panel" style="display:none;">
+        <div style="max-width:900px;">
+
+          <!-- 모드 선택 -->
+          <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+            <button id="cal-mode-price" onclick="setCalMode('price')" style="padding:10px 20px;border-radius:8px;border:2px solid #185FA5;background:#185FA5;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">💰 요금 설정 모드</button>
+            <button id="cal-mode-block" onclick="setCalMode('block')" style="padding:10px 20px;border-radius:8px;border:2px solid var(--border);background:var(--white);color:var(--text-mid);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">🚫 예약 불가 모드</button>
+          </div>
+
+          <!-- 모드별 설정 패널 -->
+          <div id="calcal-price-panel" style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;">
+            <div style="font-size:13px;font-weight:600;color:var(--green-dark);margin-bottom:12px;">💰 요금 설정 — 달력에서 날짜를 드래그해서 선택하세요</div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <label style="font-size:13px;color:var(--text-mid);">적용 요금</label>
+                <input type="number" id="calcal-price" step="1000" value="80000" style="width:110px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;">
+                <span style="font-size:13px;color:var(--text-mid);">원/박</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <label style="font-size:13px;color:var(--text-mid);">메모</label>
+                <input type="text" id="calcal-price-memo" placeholder="예: 성수기" style="width:140px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+              </div>
+              <button onclick="applyCalCalPrice()" style="padding:9px 18px;background:var(--green-dark);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">선택 날짜에 적용</button>
+              <button onclick="clearCalSel()" style="padding:9px 14px;background:var(--cream);color:var(--text-mid);border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;">선택 해제</button>
+            </div>
+          </div>
+
+          <div id="calcal-block-panel" style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;display:none;">
+            <div style="font-size:13px;font-weight:600;color:#C62828;margin-bottom:12px;">🚫 예약 불가 모드 — 달력에서 날짜를 드래그해서 선택하세요</div>
+            <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">
+              <div>
+                <div style="font-size:12px;color:var(--text-mid);margin-bottom:6px;">사이트 선택</div>
+                <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px;" id="calcal-site-select"></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:20px;">
+                <label style="font-size:13px;color:var(--text-mid);">사유</label>
+                <input type="text" id="calcal-block-memo" placeholder="예: 청소" style="width:130px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">
+              </div>
+              <button onclick="applyCalCalBlock()" style="padding:9px 18px;background:#C62828;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:20px;">선택 날짜에 적용</button>
+              <button onclick="clearCalSel()" style="padding:9px 14px;background:var(--cream);color:var(--text-mid);border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;margin-top:20px;">선택 해제</button>
+            </div>
+          </div>
+
+          <!-- 선택 안내 -->
+          <div style="font-size:12px;color:var(--text-light);margin-bottom:10px;" id="calcal-sel-info">날짜를 클릭하거나 드래그해서 선택하세요</div>
+
+          <!-- 통합 달력 -->
+          <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <button class="cal-nav" onclick="changeCalCalMonth(-1)">← 이전</button>
+              <span style="font-size:15px;font-weight:600;color:var(--green-dark);" id="calcalTitle"></span>
+              <button class="cal-nav" onclick="changeCalCalMonth(1)">다음 →</button>
+            </div>
+            <!-- 범례 -->
+            <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:5px;font-size:12px;"><div style="width:12px;height:12px;border-radius:3px;background:#EAF2EC;border:1px solid #4A7C59;"></div>평일</div>
+              <div style="display:flex;align-items:center;gap:5px;font-size:12px;"><div style="width:12px;height:12px;border-radius:3px;background:#FFF3E0;border:1px solid #E65100;"></div>주말</div>
+              <div style="display:flex;align-items:center;gap:5px;font-size:12px;"><div style="width:12px;height:12px;border-radius:3px;background:#E3F2FD;border:1px solid #1565C0;"></div>특별요금</div>
+              <div style="display:flex;align-items:center;gap:5px;font-size:12px;"><div style="width:12px;height:12px;border-radius:3px;background:#FFEBEE;border:1px solid #C62828;"></div>예약불가</div>
+              <div style="display:flex;align-items:center;gap:5px;font-size:12px;"><div style="width:12px;height:12px;border-radius:3px;background:#7B1FA2;border:1px solid #7B1FA2;"></div>선택됨</div>
+            </div>
+            <div class="calendar-grid" id="calcalGrid" style="user-select:none;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 기본 정보 -->
+      <div id="set-basic" class="set-panel" style="display:none;">
+        <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:24px;max-width:480px;">
+          <div style="font-size:14px;font-weight:600;color:var(--green-dark);margin-bottom:16px;">기본 정보</div>
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div><label style="font-size:13px;color:var(--text-mid);display:block;margin-bottom:5px;">캠핑장 이름</label><input style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;" value="나아정 캠핑장"></div>
+            <div><label style="font-size:13px;color:var(--text-mid);display:block;margin-bottom:5px;">연락처</label><input style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;" value="010-4904-0523"></div>
+            <div><label style="font-size:13px;color:var(--text-mid);display:block;margin-bottom:5px;">입실 / 퇴실</label><input style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;" value="입실 13:00 / 퇴실 12:00"></div>
+            <div><label style="font-size:13px;color:var(--text-mid);display:block;margin-bottom:5px;">입금 계좌</label><input style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;" value="카카오뱅크 3333-20-1645527 (최준호)"></div>
+          </div>
+          <button style="margin-top:20px;padding:11px 24px;background:var(--green-dark);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">저장</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 예약 상세 모달 -->
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title">예약 상세 정보</div>
+    <div id="modalContent"></div>
+    <div class="modal-btns" id="modalBtns"></div>
+  </div>
+</div>
+
+<!-- 취소 · 환불 확인 모달 -->
+<div class="modal-bg" id="cancelModalBg" onclick="if(event.target===this)closeCancelModal()">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-title">❌ 예약 취소 · 환불 확인</div>
+    <div id="cancelModalContent"></div>
+    <div class="modal-btns">
+      <button class="modal-btn" onclick="confirmCancel()" style="background:#C62828;color:#fff;border:none;font-weight:600;border-radius:var(--radius-sm);cursor:pointer;">취소 확정</button>
+      <button class="modal-btn modal-btn-secondary" onclick="closeCancelModal()">돌아가기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 모바일 하단 네비게이션 -->
+<div class="mobile-nav" id="mobileNav">
+  <div class="mobile-nav-inner">
+    <button class="mobile-nav-item active" onclick="showPage('dashboard', this)" id="mn-dashboard">
+      <span>📊</span><span>대시보드</span>
+    </button>
+    <button class="mobile-nav-item" onclick="showPage('reservations', this)" id="mn-reservations">
+      <span>📋</span><span>예약</span>
+    </button>
+    <button class="mobile-nav-item" onclick="showPage('calendar', this)" id="mn-calendar">
+      <span>📅</span><span>달력</span>
+    </button>
+    <button class="mobile-nav-item" onclick="showPage('sites', this)" id="mn-sites">
+      <span>⛺</span><span>사이트</span>
+    </button>
+    <button class="mobile-nav-item" onclick="showPage('settings', this)" id="mn-settings">
+      <span>⚙️</span><span>설정</span>
+    </button>
+  </div>
+</div>
+<div class="modal-bg" id="smsModalBg" onclick="if(event.target===this)closeSmsModal()">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-title">📱 예약 확정 문자 발송</div>
+    <div style="font-size:13px;color:var(--text-mid);margin-bottom:16px;" id="smsModalSub"></div>
+
+    <!-- 문자 내용 미리보기 -->
+    <div style="background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px;position:relative;">
+      <div style="font-size:11px;font-weight:600;color:var(--text-light);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">문자 내용 미리보기</div>
+      <div id="smsPreview" style="font-size:14px;line-height:1.8;color:var(--text-dark);white-space:pre-wrap;word-break:break-all;"></div>
+      <div style="font-size:11px;color:var(--text-light);margin-top:10px;text-align:right;" id="smsCharCount"></div>
+    </div>
+
+    <!-- 수신자 번호 -->
+    <div style="margin-bottom:14px;">
+      <label style="font-size:13px;font-weight:500;color:var(--text-mid);display:block;margin-bottom:6px;">수신자 번호</label>
+      <input type="tel" id="smsPhone" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:var(--cream);" readonly>
+    </div>
+
+    <!-- 문자 내용 수정 -->
+    <div style="margin-bottom:16px;">
+      <label style="font-size:13px;font-weight:500;color:var(--text-mid);display:block;margin-bottom:6px;">내용 수정 (선택)</label>
+      <textarea id="smsMsgEdit" rows="6" oninput="updateSmsPreview()" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;background:var(--cream);"></textarea>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="modal-btn modal-btn-primary" onclick="copySms()" style="flex:1;min-width:140px;">📋 문자 내용 복사</button>
+      <button class="modal-btn" onclick="openKakaoSms()" style="flex:1;min-width:140px;background:#FEE500;color:#191919;border:none;font-weight:600;border-radius:var(--radius-sm);cursor:pointer;">카카오톡으로 보내기</button>
+    </div>
+    <div id="copiedMsg" style="text-align:center;font-size:13px;color:var(--green-mid);margin-top:10px;display:none;">✅ 복사되었습니다! 문자 앱에 붙여넣기 하세요.</div>
+    <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px;">
+      <button class="modal-btn modal-btn-secondary" onclick="closeSmsModal()" style="width:100%;">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 금액 수정 모달 -->
+<div class="modal-bg" id="amountModalBg" onclick="if(event.target===this)closeAmountModal()">
+  <div class="modal" style="max-width:360px;">
+    <div class="modal-title">금액 수동 변경</div>
+    <div style="font-size:13px;color:var(--text-mid);margin-bottom:16px;" id="amountModalSub"></div>
+    <div style="margin-bottom:8px;">
+      <label style="font-size:13px;font-weight:500;color:var(--text-mid);display:block;margin-bottom:6px;">변경할 금액 (원)</label>
+      <input type="number" id="amountInput" step="1000" style="width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:8px;font-size:16px;font-family:inherit;">
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="font-size:13px;font-weight:500;color:var(--text-mid);display:block;margin-bottom:6px;">변경 사유 (선택)</label>
+      <input type="text" id="amountReason" placeholder="예: 할인 적용, 추가 서비스 등" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;">
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-primary" onclick="confirmAmountChange()">변경 저장</button>
+      <button class="modal-btn modal-btn-secondary" onclick="closeAmountModal()">취소</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 요금 설정 (운영자가 변경 가능)
+  let priceConfig = { weekday: 50000, weekend: 65000, discount: 5000 };
+
+  // 사이트 예약 가능 여부 (true = 가능, false = 불가)
+  let siteAvailable = {};
+  for (let i = 1; i <= 12; i++) siteAvailable[i] = true;
+
+  // 예약 데이터 (실제 운영 시작 — 비어있음)
+  let reservations = [];
+
+  let calYear = new Date().getFullYear();
+  let calMonth = new Date().getMonth();
+  let editingAmountId = null;
+
+  function doLogin() {
+    const id = document.getElementById('loginId').value.trim();
+    const pw = document.getElementById('loginPw').value.trim();
+    if (id === 'admin' && pw === '1234') {
+      document.getElementById('loginWrap').style.display = 'none';
+      document.getElementById('adminWrap').classList.add('active');
+      try { initAdmin(); } catch(e) { console.warn('initAdmin error:', e); }
+    } else {
+      alert('아이디 또는 비밀번호가 올바르지 않습니다.\n\n아이디: admin\n비밀번호: 1234');
+    }
+  }
+
+  function doLogout() {
+    document.getElementById('loginWrap').style.display = 'flex';
+    document.getElementById('adminWrap').classList.remove('active');
+  }
+
+  function initAdmin() {
+    try {
+      const now = new Date();
+      const days = ['일','월','화','수','목','금','토'];
+      document.getElementById('todayDate').textContent = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 (${days[now.getDay()]})`;
+      document.getElementById('filterMonth').value = now.toISOString().slice(0,7);
+      document.getElementById('cfg-weekday').addEventListener('input', updatePricePreview);
+      document.getElementById('cfg-weekend').addEventListener('input', updatePricePreview);
+      document.getElementById('cfg-discount').addEventListener('input', updatePricePreview);
+    } catch(e) { console.warn(e); }
+    try { updatePricePreview(); } catch(e) { console.warn(e); }
+    try { renderPriceCal(); } catch(e) { console.warn(e); }
+    try { renderSpecialPriceList(); } catch(e) { console.warn(e); }
+    try { renderBlockSiteSelect(); } catch(e) { console.warn(e); }
+    try { renderBlockCal(); } catch(e) { console.warn(e); }
+    try { renderBlockPeriodList(); } catch(e) { console.warn(e); }
+    try { renderDashboard(); } catch(e) { console.warn(e); }
+    try { renderReservations(); } catch(e) { console.warn(e); }
+    try { renderCalendar(); } catch(e) { console.warn(e); }
+    try { renderSiteStatus(); } catch(e) { console.warn(e); }
+    try { initCalCal(); } catch(e) { console.warn(e); }
+  }
+
+  function statusBadge(s) {
+    const map = { '대기':'badge-wait', '확정':'badge-ok', '완료':'badge-done', '취소':'badge-cancel' };
+    const label = { '대기':'입금 대기', '확정':'예약 확정', '완료':'이용 완료', '취소':'취소됨' };
+    return `<span class="badge ${map[s]||''}">${label[s]||s}</span>`;
+  }
+
+  function renderDashboard() {
+    const pending = reservations.filter(r => r.status === '대기');
+    const recent = [...reservations].reverse().slice(0, 6);
+    const now = new Date();
+    const thisMonth = now.toISOString().slice(0, 7);
+    const thisMonthRes = reservations.filter(r => r.checkin.startsWith(thisMonth));
+    const thisMonthSales = reservations.filter(r => r.checkin.startsWith(thisMonth) && r.status === '확정').reduce((s, r) => s + r.amount, 0);
+    const todayStr = now.toISOString().split('T')[0];
+    const todayCheckin = reservations.filter(r => r.checkin === todayStr && r.status === '확정');
+
+    // 통계 카드 업데이트
+    document.getElementById('stat-monthly').textContent = thisMonthRes.length;
+    document.getElementById('stat-pending').textContent = pending.length;
+    document.getElementById('stat-today').textContent = todayCheckin.length;
+    document.getElementById('stat-sales').textContent = thisMonthSales > 0 ? Math.floor(thisMonthSales / 10000) + '만원' : '0원';
+    document.getElementById('stat-today-sites').textContent = todayCheckin.length > 0 ? todayCheckin.map(r => r.site + '번').join(', ') : '없음';
+
+    document.getElementById('pendingTableBody').innerHTML = pending.length
+      ? pending.map(r => `<tr>
+          <td>${r.id}</td><td>${r.name}</td><td class="hide-mobile">${r.phone}</td><td>${r.site}번</td>
+          <td>${r.checkin}</td><td class="hide-mobile">${nightCount(r)}박</td><td>${r.amount.toLocaleString()}원</td>
+          <td>
+            <button class="action-btn btn-approve" onclick="approve('${r.id}')">✓ 승인</button>
+            <button class="action-btn btn-detail" onclick="showDetail('${r.id}')">상세</button>
+          </td>
+        </tr>`).join('')
+      : '<tr><td colspan="8" style="text-align:center;color:var(--text-light);padding:20px;">대기 중인 예약이 없습니다</td></tr>';
+
+    document.getElementById('recentTableBody').innerHTML = recent.length
+      ? recent.map(r => `<tr>
+          <td>${r.id}</td><td>${r.name}</td><td>${r.site}번</td>
+          <td>${r.checkin}</td><td>${r.checkout}</td><td>${r.guests}</td>
+          <td>${r.amount.toLocaleString()}원</td><td>${statusBadge(r.status)}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="8" style="text-align:center;color:var(--text-light);padding:20px;">예약 내역이 없습니다</td></tr>';
+  }
+
+  function renderReservations() {
+    const status = document.getElementById('filterStatus').value;
+    const month = document.getElementById('filterMonth').value;
+    const search = document.getElementById('filterSearch').value.toLowerCase();
+
+    let list = reservations.filter(r => {
+      if (status && r.status !== status) return false;
+      if (month && !r.checkin.startsWith(month)) return false;
+      if (search && !r.name.includes(search) && !r.phone.includes(search)) return false;
+      return true;
+    });
+
+    document.getElementById('allTableBody').innerHTML = list.length
+      ? list.map(r => `<tr>
+          <td>${r.id}</td><td>${r.name}</td><td class="hide-mobile">${r.phone}</td><td>${r.site}번</td>
+          <td>${r.checkin}</td><td class="hide-mobile">${r.checkout}</td><td class="hide-mobile">${r.guests}</td>
+          <td>${r.amount.toLocaleString()}원</td><td>${statusBadge(r.status)}</td>
+          <td>
+            ${r.status==='대기' ? `<button class="action-btn btn-approve" onclick="approve('${r.id}')">승인</button>` : ''}
+            <button class="action-btn btn-detail" onclick="showDetail('${r.id}')">상세</button>
+            ${r.status!=='취소'&&r.status!=='완료' ? `<button class="action-btn btn-cancel-r" onclick="cancelRes('${r.id}')">취소</button>` : ''}
+          </td>
+        </tr>`).join('')
+      : '<tr><td colspan="10" style="text-align:center;color:var(--text-light);padding:20px;">조건에 맞는 예약이 없습니다</td></tr>';
+  }
+
+  function nightCount(r) {
+    const d1 = new Date(r.checkin), d2 = new Date(r.checkout);
+    return Math.round((d2-d1)/86400000);
+  }
+
+  function approve(id) {
+    const r = reservations.find(x => x.id === id);
+    if (!r) return;
+    if (!confirm(`${r.name}님 예약을 승인하시겠습니까?`)) return;
+    r.status = '확정';
+    renderDashboard();
+    renderReservations();
+    renderSiteStatus();
+    closeModal();
+    openSmsModal(id);
+  }
+
+  // 문자 내용 생성
+  function buildSmsText(r) {
+    const nights = nightCount(r);
+    return `[나아정 캠핑장] 예약 확정 안내
+
+안녕하세요, ${r.name}님!
+예약이 확정되었습니다 🏕️
+
+▶ 예약번호: ${r.id}
+▶ 사이트: ${r.site}번
+▶ 입실: ${r.checkin} (오후 1시)
+▶ 퇴실: ${r.checkout} (낮 12시)
+▶ 인원: ${r.guests}
+▶ 이용 기간: ${nights}박 ${nights+1}일
+▶ 결제금액: ${r.amount.toLocaleString()}원
+
+오시는 길 및 문의:
+📞 010-4904-0523
+
+자연 속에서 즐거운 시간 되세요!
+감사합니다 🌿`;
+  }
+
+  let smsMsgCurrentId = null;
+
+  function openSmsModal(id) {
+    const r = reservations.find(x => x.id === id);
+    if (!r) return;
+    smsMsgCurrentId = id;
+    const msg = buildSmsText(r);
+    document.getElementById('smsModalSub').textContent = `${r.name}님 · ${r.phone} · ${r.site}번 사이트`;
+    document.getElementById('smsPhone').value = r.phone;
+    document.getElementById('smsMsgEdit').value = msg;
+    document.getElementById('copiedMsg').style.display = 'none';
+    updateSmsPreview();
+    document.getElementById('smsModalBg').classList.add('open');
+  }
+
+  function updateSmsPreview() {
+    const msg = document.getElementById('smsMsgEdit').value;
+    document.getElementById('smsPreview').textContent = msg;
+    const len = msg.length;
+    const type = len <= 90 ? 'SMS (단문)' : 'LMS (장문)';
+    document.getElementById('smsCharCount').textContent = `${len}자 · ${type}`;
+  }
+
+  function copySms() {
+    const msg = document.getElementById('smsMsgEdit').value;
+    navigator.clipboard.writeText(msg).then(() => {
+      document.getElementById('copiedMsg').style.display = 'block';
+      setTimeout(() => document.getElementById('copiedMsg').style.display = 'none', 3000);
+    }).catch(() => {
+      // 클립보드 API 미지원 시 대안
+      const ta = document.createElement('textarea');
+      ta.value = msg;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      document.getElementById('copiedMsg').style.display = 'block';
+      setTimeout(() => document.getElementById('copiedMsg').style.display = 'none', 3000);
+    });
+  }
+
+  function openKakaoSms() {
+    const phone = document.getElementById('smsPhone').value.replace(/-/g, '');
+    const msg = encodeURIComponent(document.getElementById('smsMsgEdit').value);
+    // 모바일에서 카카오톡 문자 연동
+    window.open(`sms:${phone}?body=${msg}`, '_blank');
+  }
+
+  function closeSmsModal() {
+    document.getElementById('smsModalBg').classList.remove('open');
+    smsMsgCurrentId = null;
+  }
+
+  // 환불 정책: 입실일까지 남은 일수 → 환불율 계산
+  function getRefundPolicy(checkin) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const ci    = new Date(checkin + 'T00:00:00');
+    const diff  = Math.round((ci - today) / 86400000); // 오늘 기준 남은 일수
+    if (diff >= 7)              return { rate: 100, label: '7일 이상 전 취소', color: '#2E7D32', bg: '#E8F5E9' };
+    if (diff === 6)             return { rate: 70,  label: '6일 전 취소',      color: '#558B2F', bg: '#F1F8E9' };
+    if (diff >= 3 && diff <= 5) return { rate: 50,  label: `${diff}일 전 취소 (3~5일)`, color: '#F57F17', bg: '#FFF8E1' };
+    if (diff === 2)             return { rate: 30,  label: '2일 전 취소',      color: '#E65100', bg: '#FFF3E0' };
+    return                             { rate: 0,   label: diff <= 0 ? '당일 취소' : '1일 전 취소', color: '#C62828', bg: '#FFEBEE' };
+  }
+
+  function cancelRes(id) {
+    const r = reservations.find(x => x.id === id);
+    if (!r) return;
+    openCancelModal(id);
+  }
+
+  let cancelingId = null;
+
+  function openCancelModal(id) {
+    const r = reservations.find(x => x.id === id);
+    if (!r) return;
+    cancelingId = id;
+    const policy = getRefundPolicy(r.checkin);
+    const refundAmt = Math.round(r.amount * policy.rate / 100);
+    const noRefund  = policy.rate === 0;
+
+    document.getElementById('cancelModalContent').innerHTML = `
+      <div style="margin-bottom:14px;">
+        <div style="font-size:14px;color:var(--text-mid);margin-bottom:10px;">
+          <strong>${r.name}</strong>님 · ${r.site}번 사이트 · ${r.checkin} 입실
+        </div>
+        <div style="background:${policy.bg};border-radius:10px;padding:16px;text-align:center;margin-bottom:12px;">
+          <div style="font-size:13px;color:${policy.color};font-weight:500;margin-bottom:6px;">${policy.label}</div>
+          <div style="font-size:26px;font-weight:700;color:${policy.color};">${policy.rate}% 환불</div>
+        </div>
+        <div style="background:var(--cream);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:14px;">
+            <span style="color:var(--text-mid);">결제 금액</span>
+            <span style="font-weight:500;">${r.amount.toLocaleString()}원</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;">
+            <span style="color:var(--text-mid);">환불율</span>
+            <span style="font-weight:500;color:${policy.color};">${policy.rate}%</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;border-top:1px solid var(--border);padding-top:8px;margin-top:2px;">
+            <span>환불 금액</span>
+            <span style="color:${noRefund ? '#C62828' : '#2E7D32'};">${noRefund ? '환불 없음' : refundAmt.toLocaleString() + '원'}</span>
+          </div>
+        </div>
+        ${noRefund ? `<div style="margin-top:10px;padding:10px;background:#FFEBEE;border-radius:8px;font-size:12px;color:#C62828;">⚠️ 입실 1일 전 또는 당일 취소로 환불이 불가합니다.</div>` : ''}
+      </div>
+    `;
+    document.getElementById('cancelModalBg').classList.add('open');
+  }
+
+  function confirmCancel() {
+    const r = reservations.find(x => x.id === cancelingId);
+    if (!r) return;
+    const policy   = getRefundPolicy(r.checkin);
+    const refundAmt = Math.round(r.amount * policy.rate / 100);
+    r.status     = '취소';
+    r.refundRate = policy.rate;
+    r.refundAmt  = refundAmt;
+    closeCancelModal();
+    renderDashboard();
+    renderReservations();
+    renderSiteStatus();
+    closeModal();
+    // 취소 문자 발송 안내
+    openCancelSmsModal(r, policy, refundAmt);
+  }
+
+  function closeCancelModal() {
+    document.getElementById('cancelModalBg').classList.remove('open');
+    cancelingId = null;
+  }
+
+  function openCancelSmsModal(r, policy, refundAmt) {
+    const noRefund = policy.rate === 0;
+    const msg = noRefund
+      ? `[나아정 캠핑장] 예약 취소 안내\n\n${r.name}님, 예약(${r.id})이 취소되었습니다.\n\n입실 1일 전·당일 취소로 환불이 불가합니다.\n이용해 주셔서 감사합니다.\n📞 010-4904-0523`
+      : `[나아정 캠핑장] 예약 취소 및 환불 안내\n\n${r.name}님, 예약(${r.id})이 취소되었습니다.\n\n▶ 결제 금액: ${r.amount.toLocaleString()}원\n▶ 환불 금액: ${refundAmt.toLocaleString()}원 (${policy.rate}%)\n▶ 환불은 3~5 영업일 이내 처리됩니다.\n\n문의: 📞 010-4904-0523`;
+
+    document.getElementById('smsModalSub').textContent = `취소 안내 문자 · ${r.name}님 · ${r.phone}`;
+    document.getElementById('smsPhone').value = r.phone;
+    document.getElementById('smsMsgEdit').value = msg;
+    document.getElementById('copiedMsg').style.display = 'none';
+    updateSmsPreview();
+    document.getElementById('smsModalBg').classList.add('open');
+  }
+
+  function showDetail(id) {
+    const r = reservations.find(x => x.id === id);
+    if (!r) return;
+    document.getElementById('modalContent').innerHTML = `
+      <div class="detail-row"><span class="detail-label">예약 번호</span><span class="detail-val">${r.id}</span></div>
+      <div class="detail-row"><span class="detail-label">예약자</span><span class="detail-val">${r.name}</span></div>
+      <div class="detail-row"><span class="detail-label">연락처</span><span class="detail-val">${r.phone}</span></div>
+      <div class="detail-row"><span class="detail-label">사이트</span><span class="detail-val">${r.site}번</span></div>
+      <div class="detail-row"><span class="detail-label">입실</span><span class="detail-val">${r.checkin} 13:00</span></div>
+      <div class="detail-row"><span class="detail-label">퇴실</span><span class="detail-val">${r.checkout} 12:00</span></div>
+      <div class="detail-row"><span class="detail-label">인원</span><span class="detail-val">${r.guests}</span></div>
+      <div class="detail-row"><span class="detail-label">반려견</span><span class="detail-val">${r.dogs ? r.dogs+'견' : '1견 (기본)'}</span></div>
+      <div class="detail-row"><span class="detail-label">차량번호</span><span class="detail-val">${r.car||'-'}</span></div>
+      <div class="detail-row">
+        <span class="detail-label">결제금액</span>
+        <span class="detail-val" style="display:flex;align-items:center;gap:8px;">
+          <span style="color:var(--green-dark);font-weight:700">${r.amount.toLocaleString()}원</span>
+          ${r.status !== '완료' ? `<button class="action-btn btn-detail" onclick="openAmountModal('${r.id}')" style="font-size:11px;padding:4px 10px;">✏️ 수정</button>` : ''}
+        </span>
+      </div>
+      <div class="detail-row"><span class="detail-label">요청사항</span><span class="detail-val">${r.request||'-'}</span></div>
+      <div class="detail-row"><span class="detail-label">상태</span><span class="detail-val">${statusBadge(r.status)}</span></div>
+      ${r.amountNote ? `<div style="margin-top:10px;padding:10px;background:#FFF8E1;border-radius:8px;font-size:12px;color:#7A5A00;">💬 금액 변경 사유: ${r.amountNote}</div>` : ''}
+      ${r.status === '취소' && r.refundAmt !== undefined ? `
+        <div style="margin-top:10px;padding:12px;background:#FFEBEE;border-radius:8px;">
+          <div style="font-size:12px;font-weight:600;color:#C62828;margin-bottom:6px;">취소 · 환불 내역</div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+            <span style="color:var(--text-mid);">환불율</span><span style="font-weight:600;color:#C62828;">${r.refundRate}%</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;">
+            <span style="color:var(--text-mid);">환불 금액</span><span style="font-weight:700;color:#C62828;">${r.refundAmt > 0 ? r.refundAmt.toLocaleString()+'원' : '환불 없음'}</span>
+          </div>
+        </div>` : ''}
+    `;
+    const btns = document.getElementById('modalBtns');
+    btns.innerHTML = r.status === '대기'
+      ? `<button class="modal-btn modal-btn-primary" onclick="approve('${r.id}');closeModal()">✓ 예약 승인</button>
+         <button class="modal-btn modal-btn-secondary" onclick="closeModal()">닫기</button>`
+      : `<button class="modal-btn modal-btn-secondary" onclick="closeModal()" style="max-width:160px;margin:0 auto">닫기</button>`;
+    document.getElementById('modalBg').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modalBg').classList.remove('open');
+  }
+
+  // 금액 수정 모달
+  function openAmountModal(id) {
+    const r = reservations.find(x => x.id === id);
+    if (!r) return;
+    editingAmountId = id;
+    document.getElementById('amountModalSub').textContent = `${r.name}님 · ${r.site}번 사이트 · 현재 ${r.amount.toLocaleString()}원`;
+    document.getElementById('amountInput').value = r.amount;
+    document.getElementById('amountReason').value = r.amountNote || '';
+    closeModal();
+    document.getElementById('amountModalBg').classList.add('open');
+  }
+
+  function closeAmountModal() {
+    document.getElementById('amountModalBg').classList.remove('open');
+    editingAmountId = null;
+  }
+
+  function confirmAmountChange() {
+    const r = reservations.find(x => x.id === editingAmountId);
+    if (!r) return;
+    const newAmt = parseInt(document.getElementById('amountInput').value);
+    const reason = document.getElementById('amountReason').value.trim();
+    if (!newAmt || newAmt <= 0) { alert('올바른 금액을 입력해주세요.'); return; }
+    const old = r.amount;
+    r.amount = newAmt;
+    r.amountNote = reason || null;
+    closeAmountModal();
+    alert(`✅ 금액이 변경되었습니다.\n${old.toLocaleString()}원 → ${newAmt.toLocaleString()}원`);
+    renderDashboard();
+    renderReservations();
+    showDetail(r.id);
+  }
+
+  // 특별 요금 및 예약 불가 데이터
+  let specialPrices = []; // { id, start, end, price, memo }
+  let blockPeriods  = []; // { id, start, end, sites:[], memo }
+
+  let priceCalYear  = new Date().getFullYear();
+  let priceCalMonth = new Date().getMonth();
+  let blockCalYear  = new Date().getFullYear();
+  let blockCalMonth = new Date().getMonth();
+  let selectedBlockSites = new Set();
+
+  // 설정 탭 전환
+  function switchSetTab(tab, el) {
+    document.querySelectorAll('.set-panel').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.set-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('set-' + tab).style.display = 'block';
+    el.classList.add('active');
+    if (tab === 'price') { updatePricePreview(); renderPriceCal(); }
+    if (tab === 'sitemgr') { renderBlockSiteSelect(); renderBlockCal(); renderBlockPeriodList(); }
+    if (tab === 'calcal') { renderCalCal(); }
+  }
+
+  // 요금 미리보기
+  function updatePricePreview() {
+    const wd = parseInt(document.getElementById('cfg-weekday').value) || 0;
+    const we = parseInt(document.getElementById('cfg-weekend').value) || 0;
+    const dc = parseInt(document.getElementById('cfg-discount').value) || 0;
+    document.getElementById('pricePreview').innerHTML =
+      `📌 평일 1박: <strong>${wd.toLocaleString()}원</strong> / 주말·공휴일 전날: <strong>${we.toLocaleString()}원</strong><br>
+       📌 2박 이상 할인: 평일 <strong>${(wd-dc).toLocaleString()}원</strong> / 주말 <strong>${(we-dc).toLocaleString()}원</strong>`;
+    renderPriceCal();
+  }
+
+  function savePriceConfig() {
+    const wd = parseInt(document.getElementById('cfg-weekday').value);
+    const we = parseInt(document.getElementById('cfg-weekend').value);
+    const dc = parseInt(document.getElementById('cfg-discount').value);
+    if (!wd || !we || dc === undefined) { alert('금액을 올바르게 입력해주세요.'); return; }
+    priceConfig = { weekday: wd, weekend: we, discount: dc };
+    alert(`✅ 요금 설정이 저장되었습니다.\n평일: ${wd.toLocaleString()}원 / 주말: ${we.toLocaleString()}원 / 연박할인: ${dc.toLocaleString()}원`);
+  }
+
+  // ── 특별 요금 관리 ────────────────────────────────────────
+  function addSpecialPrice() {
+    const start = document.getElementById('special-start').value;
+    const end   = document.getElementById('special-end').value;
+    const price = parseInt(document.getElementById('special-price').value);
+    const memo  = document.getElementById('special-memo').value.trim();
+    if (!start || !end || !price) { alert('시작일, 종료일, 요금을 모두 입력해주세요.'); return; }
+    if (end < start) { alert('종료일이 시작일보다 빨라요.'); return; }
+    specialPrices.push({ id: Date.now(), start, end, price, memo });
+    document.getElementById('special-start').value = '';
+    document.getElementById('special-end').value = '';
+    document.getElementById('special-price').value = '';
+    document.getElementById('special-memo').value = '';
+    renderSpecialPriceList();
+    renderPriceCal();
+    alert(`✅ 특별 요금이 추가됐어요.\n${start} ~ ${end}: ${price.toLocaleString()}원/박`);
+  }
+
+  function removeSpecialPrice(id) {
+    specialPrices = specialPrices.filter(x => x.id !== id);
+    renderSpecialPriceList();
+    renderPriceCal();
+  }
+
+  function renderSpecialPriceList() {
+    const el = document.getElementById('specialPriceList');
+    if (!specialPrices.length) { el.innerHTML = '<div style="font-size:13px;color:var(--text-light);text-align:center;padding:12px;">설정된 특별 요금이 없어요</div>'; return; }
+    el.innerHTML = specialPrices.map(p => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--green-pale);border-radius:8px;margin-bottom:6px;font-size:13px;">
+        <div>
+          <div style="font-weight:500;">${p.start} ~ ${p.end}</div>
+          <div style="color:var(--green-dark);font-weight:600;">${p.price.toLocaleString()}원/박 ${p.memo ? '· '+p.memo : ''}</div>
+        </div>
+        <button onclick="removeSpecialPrice(${p.id})" style="background:#FFEBEE;color:#C62828;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">삭제</button>
+      </div>`).join('');
+  }
+
+  // 특별 요금 적용 여부 확인
+  function getSpecialPrice(dateStr) {
+    const sp = specialPrices.find(p => dateStr >= p.start && dateStr <= p.end);
+    return sp ? sp.price : null;
+  }
+
+  // ── 통합 달력 설정 ────────────────────────────────────────
+  let calcalYear  = new Date().getFullYear();
+  let calcalMonth = new Date().getMonth();
+  let calcalMode  = 'price'; // 'price' | 'block'
+  let calcalSelected = new Set(); // 선택된 날짜 Set
+  let calcalDragging = false;
+  let calcalDragStart = null;
+  let calcalSelectedBlockSites = new Set();
+
+  function setCalMode(mode) {
+    calcalMode = mode;
+    const priceBtn = document.getElementById('cal-mode-price');
+    const blockBtn = document.getElementById('cal-mode-block');
+    const pricePanel = document.getElementById('calcal-price-panel');
+    const blockPanel = document.getElementById('calcal-block-panel');
+    if (mode === 'price') {
+      priceBtn.style.background = '#185FA5'; priceBtn.style.color = '#fff'; priceBtn.style.borderColor = '#185FA5';
+      blockBtn.style.background = 'var(--white)'; blockBtn.style.color = 'var(--text-mid)'; blockBtn.style.borderColor = 'var(--border)';
+      pricePanel.style.display = 'block'; blockPanel.style.display = 'none';
+    } else {
+      blockBtn.style.background = '#C62828'; blockBtn.style.color = '#fff'; blockBtn.style.borderColor = '#C62828';
+      priceBtn.style.background = 'var(--white)'; priceBtn.style.color = 'var(--text-mid)'; priceBtn.style.borderColor = 'var(--border)';
+      blockPanel.style.display = 'block'; pricePanel.style.display = 'none';
+      renderCalCalSiteSelect();
+    }
+    calcalSelected.clear();
+    renderCalCal();
+  }
+
+  function renderCalCalSiteSelect() {
+    let html = '';
+    for (let i = 1; i <= 12; i++) {
+      const sel = calcalSelectedBlockSites.has(i);
+      html += `<div onclick="toggleCalCalSite(${i})" style="padding:6px 4px;border-radius:6px;border:1px solid ${sel?'#C62828':'var(--border)'};background:${sel?'#FFEBEE':'var(--white)'};text-align:center;font-size:12px;font-weight:500;cursor:pointer;color:${sel?'#C62828':'var(--text-dark)'};">${i}번</div>`;
+    }
+    document.getElementById('calcal-site-select').innerHTML = html;
+  }
+
+  function toggleCalCalSite(num) {
+    if (calcalSelectedBlockSites.has(num)) calcalSelectedBlockSites.delete(num);
+    else calcalSelectedBlockSites.add(num);
+    renderCalCalSiteSelect();
+  }
+
+  function renderCalCal() {
+    document.getElementById('calcalTitle').textContent = `${calcalYear}년 ${calcalMonth+1}월`;
+    const dayNames = ['일','월','화','수','목','금','토'];
+    const grid = document.getElementById('calcalGrid');
+    let html = dayNames.map(d => `<div class="cal-day-name">${d}</div>`).join('');
+    const first = new Date(calcalYear, calcalMonth, 1);
+    const last  = new Date(calcalYear, calcalMonth+1, 0);
+    const today = new Date().toISOString().split('T')[0];
+
+    for (let i = 0; i < first.getDay(); i++) html += `<div class="cal-cell other-month"></div>`;
+
+    for (let d = 1; d <= last.getDate(); d++) {
+      const dateStr = `${calcalYear}-${String(calcalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isSel   = calcalSelected.has(dateStr);
+      const sp      = getSpecialPrice(dateStr);
+      const isWe    = isWeekendPriceDay(dateStr);
+      const blocked = getBlockedSitesOnDate(dateStr);
+      const isToday = dateStr === today;
+
+      let bg = '#EAF2EC', border = '#7BAE8A';
+      if (isSel)          { bg = '#7B1FA2'; border = '#7B1FA2'; }
+      else if (blocked.size > 0 && sp !== null) { bg = '#EDE7F6'; border = '#7B1FA2'; }
+      else if (blocked.size > 0) { bg = '#FFEBEE'; border = '#C62828'; }
+      else if (sp !== null)      { bg = '#E3F2FD'; border = '#1565C0'; }
+      else if (isWe)             { bg = '#FFF3E0'; border = '#E65100'; }
+
+      const priceDisplay = sp !== null ? sp.toLocaleString()
+        : isWe ? (parseInt(document.getElementById('cfg-weekend')?.value)||65000).toLocaleString()
+        : (parseInt(document.getElementById('cfg-weekday')?.value)||50000).toLocaleString();
+
+      const blockDisplay = blocked.size > 0 ? `<div style="font-size:9px;color:#C62828;">불가${[...blocked].join(',')}</div>` : '';
+
+      html += `<div class="cal-cell" data-date="${dateStr}"
+        style="background:${bg};border:1px solid ${border};min-height:58px;cursor:pointer;${isToday?'outline:2px solid var(--green-dark);':''}transition:opacity 0.1s;"
+        onmousedown="calCalMouseDown('${dateStr}')"
+        onmouseover="calCalMouseOver('${dateStr}')"
+        onmouseup="calCalMouseUp()">
+        <div class="cal-date" style="${isSel?'color:#fff;':''}">${d}</div>
+        <div style="font-size:10px;font-weight:500;color:${isSel?'#fff':'#333'};">${priceDisplay}</div>
+        ${blockDisplay}
+      </div>`;
+    }
+    grid.innerHTML = html;
+    updateCalCalSelInfo();
+
+    // 마우스업 이벤트 전역 등록
+    document.onmouseup = calCalMouseUp;
+  }
+
+  function calCalMouseDown(dateStr) {
+    calcalDragging = true;
+    calcalDragStart = dateStr;
+    if (calcalSelected.has(dateStr)) {
+      calcalSelected.delete(dateStr);
+    } else {
+      calcalSelected.add(dateStr);
+    }
+    renderCalCal();
+  }
+
+  function calCalMouseOver(dateStr) {
+    if (!calcalDragging || !calcalDragStart) return;
+    // 드래그 범위 내 날짜 모두 선택
+    const start = calcalDragStart < dateStr ? calcalDragStart : dateStr;
+    const end   = calcalDragStart < dateStr ? dateStr : calcalDragStart;
+    const cur = new Date(start + 'T00:00:00');
+    const endD = new Date(end + 'T00:00:00');
+    // 드래그 시작 날짜 기준으로 추가/제거 결정
+    calcalSelected.add(calcalDragStart);
+    while (cur <= endD) {
+      calcalSelected.add(cur.toISOString().split('T')[0]);
+      cur.setDate(cur.getDate() + 1);
+    }
+    renderCalCal();
+  }
+
+  function calCalMouseUp() {
+    calcalDragging = false;
+    calcalDragStart = null;
+  }
+
+  function updateCalCalSelInfo() {
+    const cnt = calcalSelected.size;
+    const el = document.getElementById('calcal-sel-info');
+    if (!el) return;
+    if (cnt === 0) { el.textContent = '날짜를 클릭하거나 드래그해서 선택하세요'; return; }
+    const sorted = [...calcalSelected].sort();
+    el.textContent = `✅ ${cnt}일 선택됨 (${sorted[0]} ~ ${sorted[sorted.length-1]})`;
+  }
+
+  function clearCalSel() {
+    calcalSelected.clear();
+    renderCalCal();
+  }
+
+  function applyCalCalPrice() {
+    if (calcalSelected.size === 0) { alert('날짜를 먼저 선택해주세요.'); return; }
+    const price = parseInt(document.getElementById('calcal-price').value);
+    const memo  = document.getElementById('calcal-price-memo').value.trim();
+    if (!price) { alert('요금을 입력해주세요.'); return; }
+    const sorted = [...calcalSelected].sort();
+    const start = sorted[0], end = sorted[sorted.length - 1];
+    specialPrices.push({ id: Date.now(), start, end, price, memo: memo || `달력설정` });
+    calcalSelected.clear();
+    renderCalCal();
+    renderSpecialPriceList();
+    renderPriceCal();
+    alert(`✅ ${sorted.length}일에 ${price.toLocaleString()}원 요금이 적용됐어요!`);
+  }
+
+  function applyCalCalBlock() {
+    if (calcalSelected.size === 0) { alert('날짜를 먼저 선택해주세요.'); return; }
+    if (calcalSelectedBlockSites.size === 0) { alert('예약 불가로 설정할 사이트를 선택해주세요.'); return; }
+    const memo   = document.getElementById('calcal-block-memo').value.trim();
+    const sorted = [...calcalSelected].sort();
+    const start  = sorted[0], end = sorted[sorted.length - 1];
+    blockPeriods.push({ id: Date.now(), start, end, sites: [...calcalSelectedBlockSites], memo: memo || '달력설정' });
+    calcalSelected.clear();
+    calcalSelectedBlockSites.clear();
+    renderCalCalSiteSelect();
+    renderCalCal();
+    renderBlockPeriodList();
+    renderBlockCal();
+    renderSiteStatus();
+    alert(`✅ ${sorted.length}일에 예약 불가가 설정됐어요!`);
+  }
+
+  function changeCalCalMonth(delta) {
+    calcalMonth += delta;
+    if (calcalMonth > 11) { calcalMonth = 0; calcalYear++; }
+    if (calcalMonth < 0)  { calcalMonth = 11; calcalYear--; }
+    renderCalCal();
+  }
+  function renderPriceCal() {
+    const wd = parseInt(document.getElementById('cfg-weekday')?.value) || priceConfig.weekday;
+    const we = parseInt(document.getElementById('cfg-weekend')?.value) || priceConfig.weekend;
+    document.getElementById('priceCalTitle').textContent = `${priceCalYear}년 ${priceCalMonth+1}월`;
+    const dayNames = ['일','월','화','수','목','금','토'];
+    let html = dayNames.map(d => `<div class="cal-day-name">${d}</div>`).join('');
+    const first = new Date(priceCalYear, priceCalMonth, 1);
+    const last  = new Date(priceCalYear, priceCalMonth+1, 0);
+    for (let i = 0; i < first.getDay(); i++) html += `<div class="cal-cell other-month"></div>`;
+    for (let d = 1; d <= last.getDate(); d++) {
+      const dateStr = `${priceCalYear}-${String(priceCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const sp = getSpecialPrice(dateStr);
+      const isWe = isWeekendPriceDay(dateStr);
+      let bg = '#EAF2EC', border = '#4A7C59', priceText = wd.toLocaleString();
+      if (sp !== null) { bg = '#E3F2FD'; border = '#1565C0'; priceText = sp.toLocaleString(); }
+      else if (isWe)   { bg = '#FFF3E0'; border = '#E65100'; priceText = we.toLocaleString(); }
+      html += `<div class="cal-cell" style="background:${bg};border:1px solid ${border};min-height:52px;">
+        <div class="cal-date">${d}</div>
+        <div style="font-size:10px;font-weight:500;color:#333;">${priceText}</div>
+      </div>`;
+    }
+    document.getElementById('priceCalGrid').innerHTML = html;
+  }
+
+  function changePriceCalMonth(delta) {
+    priceCalMonth += delta;
+    if (priceCalMonth > 11) { priceCalMonth = 0; priceCalYear++; }
+    if (priceCalMonth < 0)  { priceCalMonth = 11; priceCalYear--; }
+    renderPriceCal();
+  }
+
+  // 공휴일 전날 포함 주말 요금 판별 (index.html과 동일 로직)
+  const HOLIDAYS_ADMIN = new Set([
+    '2025-01-01','2025-01-28','2025-01-29','2025-01-30',
+    '2025-03-01','2025-05-05','2025-05-06','2025-06-06',
+    '2025-08-15','2025-10-03','2025-10-05','2025-10-06','2025-10-07','2025-10-08',
+    '2025-11-05','2025-12-25',
+    '2026-01-01','2026-02-17','2026-02-18','2026-02-19',
+    '2026-03-01','2026-05-05','2026-05-25','2026-06-06',
+    '2026-08-15','2026-09-24','2026-09-25','2026-09-26',
+    '2026-10-03','2026-10-09','2026-12-25'
+  ]);
+
+  function isWeekendPriceDay(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const day = d.getDay();
+    // 공휴일 당일 → 평일 요금
+    if (HOLIDAYS_ADMIN.has(dateStr)) return false;
+    // 금(5), 토(6) → 주말요금
+    if (day === 5 || day === 6) return true;
+    // 다음날이 공휴일이면 → 공휴일 전날 요금
+    const next = new Date(d);
+    next.setDate(next.getDate() + 1);
+    const nextStr = next.getFullYear() + '-' + String(next.getMonth()+1).padStart(2,'0') + '-' + String(next.getDate()).padStart(2,'0');
+    if (HOLIDAYS_ADMIN.has(nextStr)) return true;
+    return false;
+  }
+
+  // ── 예약 불가 기간 관리 ─────────────────────────────────
+  function renderBlockSiteSelect() {
+    let html = '';
+    for (let i = 1; i <= 12; i++) {
+      const sel = selectedBlockSites.has(i);
+      html += `<div onclick="toggleBlockSite(${i})" style="padding:8px 4px;border-radius:6px;border:1px solid ${sel?'#C62828':'var(--border)'};background:${sel?'#FFEBEE':'var(--white)'};text-align:center;font-size:13px;font-weight:500;cursor:pointer;color:${sel?'#C62828':'var(--text-dark)'};">${i}번</div>`;
+    }
+    document.getElementById('blockSiteSelect').innerHTML = html;
+  }
+
+  function toggleBlockSite(num) {
+    if (selectedBlockSites.has(num)) selectedBlockSites.delete(num);
+    else selectedBlockSites.add(num);
+    renderBlockSiteSelect();
+  }
+
+  function addBlockPeriod() {
+    const start = document.getElementById('block-start').value;
+    const end   = document.getElementById('block-end').value;
+    const memo  = document.getElementById('block-memo').value.trim();
+    if (!start || !end) { alert('시작일과 종료일을 입력해주세요.'); return; }
+    if (end < start) { alert('종료일이 시작일보다 빨라요.'); return; }
+    if (selectedBlockSites.size === 0) { alert('예약 불가로 설정할 사이트를 선택해주세요.'); return; }
+    blockPeriods.push({ id: Date.now(), start, end, sites: [...selectedBlockSites], memo });
+    selectedBlockSites.clear();
+    document.getElementById('block-start').value = '';
+    document.getElementById('block-end').value = '';
+    document.getElementById('block-memo').value = '';
+    renderBlockSiteSelect();
+    renderBlockPeriodList();
+    renderBlockCal();
+    renderSiteStatus();
+    alert(`✅ 예약 불가 기간이 추가됐어요.\n${start} ~ ${end}`);
+  }
+
+  function removeBlockPeriod(id) {
+    blockPeriods = blockPeriods.filter(x => x.id !== id);
+    renderBlockPeriodList();
+    renderBlockCal();
+    renderSiteStatus();
+  }
+
+  function renderBlockPeriodList() {
+    const el = document.getElementById('blockPeriodList');
+    if (!blockPeriods.length) { el.innerHTML = '<div style="font-size:13px;color:var(--text-light);text-align:center;padding:12px;">설정된 예약 불가 기간이 없어요</div>'; return; }
+    el.innerHTML = blockPeriods.map(p => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#FFF5F5;border-radius:8px;margin-bottom:6px;font-size:13px;">
+        <div>
+          <div style="font-weight:500;">${p.start} ~ ${p.end}</div>
+          <div style="color:#C62828;">${p.sites.map(s=>s+'번').join(', ')} ${p.memo ? '· '+p.memo : ''}</div>
+        </div>
+        <button onclick="removeBlockPeriod(${p.id})" style="background:#FFEBEE;color:#C62828;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;">삭제</button>
+      </div>`).join('');
+  }
+
+  // 특정 날짜에 예약 불가인 사이트 반환
+  function getBlockedSitesOnDate(dateStr) {
+    const blocked = new Set();
+    blockPeriods.forEach(p => {
+      if (dateStr >= p.start && dateStr <= p.end) p.sites.forEach(s => blocked.add(s));
+    });
+    return blocked;
+  }
+
+  // ── 예약 불가 달력 ──────────────────────────────────────
+  function renderBlockCal() {
+    document.getElementById('blockCalTitle').textContent = `${blockCalYear}년 ${blockCalMonth+1}월`;
+    const dayNames = ['일','월','화','수','목','금','토'];
+    let html = dayNames.map(d => `<div class="cal-day-name">${d}</div>`).join('');
+    const first = new Date(blockCalYear, blockCalMonth, 1);
+    const last  = new Date(blockCalYear, blockCalMonth+1, 0);
+    for (let i = 0; i < first.getDay(); i++) html += `<div class="cal-cell other-month"></div>`;
+    for (let d = 1; d <= last.getDate(); d++) {
+      const dateStr = `${blockCalYear}-${String(blockCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const blocked = getBlockedSitesOnDate(dateStr);
+      const hasBlock = blocked.size > 0;
+      html += `<div class="cal-cell" style="${hasBlock?'background:#FFF5F5;border:1px solid #FFCDD2;':''}min-height:52px;cursor:${hasBlock?'pointer':'default'};" onclick="showBlockDetail('${dateStr}')">
+        <div class="cal-date">${d}</div>
+        ${hasBlock ? `<div style="font-size:9px;color:#C62828;font-weight:500;">${[...blocked].map(s=>s+'번').join(' ')}</div>` : ''}
+      </div>`;
+    }
+    document.getElementById('blockCalGrid').innerHTML = html;
+  }
+
+  function showBlockDetail(dateStr) {
+    const blocked = getBlockedSitesOnDate(dateStr);
+    if (!blocked.size) { document.getElementById('blockCalDetail').innerHTML = ''; return; }
+    document.getElementById('blockCalDetail').innerHTML = `
+      <div style="padding:12px;background:#FFEBEE;border-radius:8px;font-size:13px;">
+        <strong>${dateStr}</strong> 예약 불가 사이트: <span style="color:#C62828;font-weight:600;">${[...blocked].map(s=>s+'번').join(', ')}</span>
+      </div>`;
+  }
+
+  function changeBlockCalMonth(delta) {
+    blockCalMonth += delta;
+    if (blockCalMonth > 11) { blockCalMonth = 0; blockCalYear++; }
+    if (blockCalMonth < 0)  { blockCalMonth = 11; blockCalYear--; }
+    renderBlockCal();
+  }
+
+  function renderCalendar() {
+    const title = `${calYear}년 ${calMonth+1}월`;
+    document.getElementById('calMonthTitle').textContent = title;
+    const grid = document.getElementById('calGrid');
+    const dayNames = ['일','월','화','수','목','금','토'];
+    let html = dayNames.map(d => `<div class="cal-day-name">${d}</div>`).join('');
+
+    const first = new Date(calYear, calMonth, 1);
+    const last = new Date(calYear, calMonth+1, 0);
+    const today = new Date();
+
+    for (let i = 0; i < first.getDay(); i++) {
+      html += `<div class="cal-cell other-month"></div>`;
+    }
+    for (let d = 1; d <= last.getDate(); d++) {
+      const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isToday = today.getFullYear()===calYear && today.getMonth()===calMonth && today.getDate()===d;
+      const dayRes = reservations.filter(r => r.checkin === dateStr && r.status !== '취소');
+      const bookingHtml = dayRes.map(r => `<div class="cal-booking" onclick="showDetail('${r.id}')">${r.site}번 ${r.name}</div>`).join('');
+      html += `<div class="cal-cell${isToday?' today':''}"><div class="cal-date">${d}</div>${bookingHtml}</div>`;
+    }
+    grid.innerHTML = html;
+  }
+
+  function changeMonth(delta) {
+    calMonth += delta;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+  }
+
+  function renderSiteStatus() {
+    const today = new Date().toISOString().split('T')[0];
+    const todayBlocked = getBlockedSitesOnDate(today);
+    let html = '';
+    for (let i = 1; i <= 12; i++) {
+      const occupied = reservations.find(r =>
+        r.site === i && r.checkin <= today && r.checkout > today && r.status === '확정'
+      );
+      const isBlocked = todayBlocked.has(i);
+      const bgStyle = isBlocked ? 'background:#FFF5F5;border-color:#FFCDD2;' : '';
+      html += `<div class="site-status-card${occupied?' occupied':''}" style="${bgStyle}" onclick="${occupied?`showDetail('${occupied.id}')`:isBlocked?`showBlockDetail('${today}')` :'void(0)'}">
+        <div class="site-num-big" style="${isBlocked?'color:#C62828;':''}">${i}번</div>
+        <div class="site-status-label">${isBlocked ? '예약 불가' : occupied ? '이용 중' : '비어있음'}</div>
+        ${occupied ? `<div class="site-guest">${occupied.name}</div>` : ''}
+        ${isBlocked ? `<div style="font-size:11px;color:#EF9A9A;margin-top:2px;">불가 기간 설정됨</div>` : ''}
+      </div>`;
+    }
+    document.getElementById('siteStatusGrid').innerHTML = html;
+  }
+
+  function showPage(name, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.mobile-nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    // 사이드바 + 모바일 네비 동시 활성화
+    if (el) el.classList.add('active');
+    const mnEl = document.getElementById('mn-' + name);
+    if (mnEl) mnEl.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>

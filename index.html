@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>나아정 캠핑장 예약</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=Noto+Sans+KR:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-dark: #2D4A2D;
+    --green-mid: #4A7C59;
+    --green-light: #7BAE8A;
+    --green-pale: #EAF2EC;
+    --cream: #F8F5EF;
+    --brown: #8B6F47;
+    --brown-light: #C4A882;
+    --text-dark: #1E2D1E;
+    --text-mid: #4A5A4A;
+    --text-light: #7A8A7A;
+    --white: #FFFFFF;
+    --border: #D4E4D4;
+    --shadow: rgba(45,74,45,0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--cream);
+    color: var(--text-dark);
+    min-height: 100vh;
+  }
+
+  /* 헤더 */
+  header {
+    background: var(--green-dark);
+    color: var(--white);
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  }
+  .header-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .logo-svg-wrap {
+    position: relative;
+    width: 52px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+  .logo-svg-wrap svg { width: 100%; height: 100%; }
+  .logo-text-wrap {
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Noto Serif KR', serif;
+    font-size: 9px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+    display: flex;
+    gap: 1px;
+  }
+  .logo-text-wrap .mid { font-weight: 200; }
+  .header-info {
+    font-size: 12px;
+    color: rgba(255,255,255,0.65);
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  /* 히어로 슬라이드쇼 */
+  .hero {
+    position: relative;
+    overflow: hidden;
+    height: 420px;
+    text-align: center;
+    color: var(--white);
+  }
+  .hero-slides {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    transition: none;
+  }
+  .hero-slide {
+    min-width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    transition: opacity 1s ease;
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+  }
+  .hero-slide.active { opacity: 1; }
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.25) 0%,
+      rgba(0,0,0,0.45) 100%
+    );
+  }
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 24px;
+  }
+  .hero h1 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 32px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    letter-spacing: 0.03em;
+  }
+  .hero p {
+    font-size: 15px;
+    color: rgba(255,255,255,0.88);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+  .hero-badges {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .hero-badge {
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.95);
+    backdrop-filter: blur(4px);
+  }
+  /* 슬라이드 인디케이터 */
+  .hero-dots {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 7px;
+    z-index: 3;
+  }
+  .hero-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.45);
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+    padding: 0;
+  }
+  .hero-dot.active {
+    background: rgba(255,255,255,0.95);
+    width: 22px;
+    border-radius: 4px;
+  }
+  /* 좌우 화살표 */
+  .hero-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.2s;
+    backdrop-filter: blur(4px);
+  }
+  .hero-arrow:hover { background: rgba(255,255,255,0.32); }
+  .hero-arrow.left { left: 14px; }
+  .hero-arrow.right { right: 14px; }
+
+  @media (max-width: 600px) {
+    .hero { height: 300px; }
+    .hero h1 { font-size: 22px; }
+    .hero p { font-size: 13px; }
+    .hero-badge { font-size: 11px; padding: 5px 12px; }
+    .hero-arrow { width: 30px; height: 30px; font-size: 13px; }
+  }
+
+  /* 메인 레이아웃 */
+  .main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 32px 24px 60px;
+  }
+
+  /* 스텝 바 */
+  .step-bar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 32px;
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 16px 24px;
+  }
+  .step-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+  }
+  .step-circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 500;
+    flex-shrink: 0;
+    transition: all 0.3s;
+  }
+  .step-item.active .step-circle { background: var(--green-mid); color: var(--white); }
+  .step-item.done .step-circle { background: var(--green-dark); color: var(--white); }
+  .step-item.pending .step-circle { background: var(--green-pale); color: var(--text-light); border: 1px solid var(--border); }
+  .step-label { font-size: 13px; font-weight: 500; color: var(--text-mid); }
+  .step-item.active .step-label { color: var(--green-dark); }
+  .step-item.pending .step-label { color: var(--text-light); }
+  .step-line { flex: 1; height: 1px; background: var(--border); margin: 0 4px; }
+
+  /* 섹션 카드 */
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--green-dark);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 18px;
+    background: var(--green-mid);
+    border-radius: 2px;
+  }
+
+  /* 날짜 선택 */
+  .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .date-group label { display: block; font-size: 13px; color: var(--text-mid); margin-bottom: 6px; font-weight: 500; }
+  .date-group input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    color: var(--text-dark);
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--cream);
+    transition: border-color 0.2s;
+  }
+  .date-group input:focus { outline: none; border-color: var(--green-mid); background: var(--white); }
+  .nights-badge {
+    display: inline-block;
+    background: var(--green-pale);
+    color: var(--green-dark);
+    border-radius: 999px;
+    padding: 4px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 12px;
+  }
+
+  /* 사이트 그리드 */
+  .site-legend { display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-mid); }
+  .legend-dot { width: 14px; height: 14px; border-radius: 4px; }
+  .site-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .site-btn {
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    background: var(--white);
+    color: var(--text-dark);
+    font-family: 'Noto Sans KR', sans-serif;
+    overflow: hidden;
+    padding: 0;
+  }
+  .site-btn-img {
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .site-btn-img.garden { background: linear-gradient(160deg, #3d6e3a, #5a8a4a); }
+  .site-btn-img.valley { background: linear-gradient(160deg, #4a6e8a, #5a8aaa); }
+  .site-btn-body { padding: 8px 6px 10px; }
+  .site-btn .site-num { font-family: 'Noto Serif KR', serif; font-size: 15px; font-weight: 600; display: block; margin-bottom: 2px; color: var(--text-dark); }
+  .site-btn .site-view { font-size: 10px; color: var(--text-light); display: block; margin-bottom: 4px; }
+  .site-btn .site-status { font-size: 10px; font-weight: 500; }
+  .site-btn.available:hover { border-color: var(--green-mid); }
+  .site-btn.available:hover .site-btn-img { opacity: 0.85; }
+  .site-btn.selected { border-color: var(--green-dark); border-width: 2px; }
+  .site-btn.selected .site-num { color: var(--green-dark); }
+  .site-btn.booked { opacity: 0.5; cursor: not-allowed; }
+  .site-btn.booked .site-btn-img { filter: grayscale(1); }
+
+  /* 폼 */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-group label { font-size: 13px; font-weight: 500; color: var(--text-mid); }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 11px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    color: var(--text-dark);
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--cream);
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus { outline: none; border-color: var(--green-mid); background: var(--white); }
+  .form-group textarea { resize: none; height: 80px; }
+
+  /* 가격 요약 */
+  .price-box {
+    background: var(--green-pale);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .price-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    padding: 5px 0;
+    color: var(--text-mid);
+  }
+  .price-row.total {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--green-dark);
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+    padding-top: 12px;
+  }
+  .discount-badge {
+    background: #FFF3E0;
+    color: #E65100;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-weight: 500;
+    margin-left: 6px;
+  }
+
+  /* 계좌 안내 */
+  .account-box {
+    background: #FFFBF0;
+    border: 1px solid #F0D88A;
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .account-box .account-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #7A5A00;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .account-num {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-dark);
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+  .account-sub { font-size: 13px; color: var(--text-mid); }
+
+  /* 버튼 */
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    background: var(--green-dark);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: background 0.2s;
+    letter-spacing: 0.02em;
+  }
+  .btn-primary:hover { background: var(--green-mid); }
+  .btn-secondary {
+    padding: 12px 24px;
+    background: var(--white);
+    color: var(--text-dark);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { background: var(--green-pale); border-color: var(--green-mid); }
+  .nav-btns { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+
+  /* 완료 화면 */
+  .success-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 40px 24px;
+    text-align: center;
+  }
+  .success-icon {
+    width: 64px;
+    height: 64px;
+    background: var(--green-pale);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 28px;
+  }
+  .success-title { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 600; color: var(--green-dark); margin-bottom: 8px; }
+  .success-sub { font-size: 14px; color: var(--text-mid); margin-bottom: 24px; line-height: 1.7; }
+  .confirm-box {
+    background: var(--green-pale);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    text-align: left;
+    margin-bottom: 24px;
+  }
+  .confirm-row { display: flex; justify-content: space-between; font-size: 14px; padding: 5px 0; }
+  .confirm-row span:first-child { color: var(--text-mid); }
+  .confirm-row span:last-child { font-weight: 500; color: var(--text-dark); }
+
+  /* 안내 박스 */
+  .notice-box {
+    background: var(--green-pale);
+    border-left: 3px solid var(--green-mid);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 14px 16px;
+    margin-top: 12px;
+  }
+  .notice-box p { font-size: 13px; color: var(--text-mid); line-height: 1.7; }
+  .notice-box p + p { margin-top: 4px; }
+
+  /* 편의시설 섹션 */
+  .fac-section { background: var(--green-dark); padding: 48px 24px; }
+  .fac-section-inner { max-width: 960px; margin: 0 auto; }
+  .fac-section-tag { font-size: 11px; letter-spacing: .2em; color: rgba(255,255,255,.5); font-weight: 500; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
+  .fac-section-title { font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 300; color: #fff; text-align: center; margin-bottom: 32px; }
+  .fac-section-title strong { font-weight: 600; color: #B8D4C8; }
+  .fac-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .fac-card { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); border-radius: 14px; padding: 22px 20px; transition: background .2s; }
+  .fac-card:hover { background: rgba(255,255,255,.12); }
+  .fac-icon { font-size: 24px; margin-bottom: 12px; }
+  .fac-name { font-size: 15px; font-weight: 500; color: #fff; margin-bottom: 6px; }
+  .fac-desc { font-size: 12px; color: rgba(255,255,255,.55); line-height: 1.7; font-weight: 300; margin-bottom: 10px; }
+  .fac-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .fac-tag { font-size: 10px; background: rgba(255,255,255,.1); color: rgba(255,255,255,.7); padding: 2px 8px; border-radius: 20px; }
+  /* 주의사항 팝업 */
+  .notice-modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 200; align-items: center; justify-content: center; padding: 16px; }
+  .notice-modal-bg.active { display: flex; }
+  .notice-modal { background: #fff; border-radius: 16px; width: 100%; max-width: 500px; box-shadow: 0 24px 64px rgba(0,0,0,.3); max-height: 90vh; overflow-y: auto; }
+  .notice-modal-header { background: var(--green-dark); padding: 20px 24px; }
+  .notice-modal-header-title { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 2px; }
+  .notice-modal-header-sub { font-size: 12px; color: rgba(255,255,255,.6); font-weight: 300; }
+  .notice-modal-body { padding: 20px 24px; }
+  .notice-modal-item { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; background: var(--cream); margin-bottom: 8px; }
+  .notice-modal-item.highlight { background: #FFF8EE; border: 1px solid rgba(193,123,58,.2); }
+  .notice-modal-item-icon { font-size: 18px; min-width: 24px; }
+  .notice-modal-item-title { font-size: 13px; font-weight: 500; color: var(--text-dark); margin-bottom: 3px; }
+  .notice-modal-item.highlight .notice-modal-item-title { color: #7A5A00; }
+  .notice-modal-item-desc { font-size: 12px; color: var(--text-mid); line-height: 1.6; font-weight: 300; }
+  .notice-agree-box { display: flex; align-items: center; gap: 10px; padding: 13px 14px; border: 1.5px solid var(--green-dark); border-radius: 10px; cursor: pointer; margin: 14px 0; transition: background .2s; }
+  .notice-agree-box.checked { background: #e8f5e8; }
+  .notice-agree-check { width: 22px; height: 22px; min-width: 22px; border-radius: 6px; border: 2px solid var(--green-dark); display: flex; align-items: center; justify-content: center; transition: background .2s; }
+  .notice-agree-box.checked .notice-agree-check { background: var(--green-dark); }
+  .notice-agree-check-mark { color: #fff; font-size: 13px; display: none; }
+  .notice-agree-box.checked .notice-agree-check-mark { display: block; }
+  .notice-agree-text { font-size: 13px; font-weight: 500; color: var(--green-dark); }
+  .notice-modal-btn { width: 100%; padding: 13px; background: #ccc; color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: not-allowed; font-family: 'Noto Sans KR', sans-serif; transition: background .2s; }
+  .notice-modal-btn.active { background: var(--green-dark); cursor: pointer; }
+  .notice-modal-btn.active:hover { background: var(--green-mid); }
+  /* 환불 정책 테이블 */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 14px;
+    border-radius: 6px;
+    margin-bottom: 5px;
+    font-size: 14px;
+  }
+  .refund-day { font-weight: 500; color: var(--text-dark); }
+  .refund-rate { font-weight: 600; }
+  .refund-row.best  { background: #E8F5E9; } .refund-row.best  .refund-rate { color: #2E7D32; }
+  .refund-row.good  { background: #F1F8E9; } .refund-row.good  .refund-rate { color: #558B2F; }
+  .refund-row.mid   { background: #FFF8E1; } .refund-row.mid   .refund-rate { color: #F57F17; }
+  .refund-row.low   { background: #FFF3E0; } .refund-row.low   .refund-rate { color: #E65100; }
+  .refund-row.none  { background: #FFEBEE; } .refund-row.none  .refund-rate { color: #C62828; }
+
+  @media (max-width: 600px) {
+    .refund-row { font-size: 13px; padding: 10px 12px; }
+  }
+
+  /* 스크린 전환 */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* 반응형 — 모바일 최적화 */
+  @media (max-width: 600px) {
+    /* 헤더 */
+    .header-inner { height: 52px; }
+    .logo { font-size: 17px; }
+    .header-info { font-size: 11px; }
+
+    /* 히어로 */
+    .hero { padding: 28px 16px; }
+    .hero h1 { font-size: 22px; }
+    .hero p { font-size: 13px; }
+    .hero-badge { font-size: 11px; padding: 5px 12px; }
+
+    /* 메인 여백 */
+    .main { padding: 16px 12px 60px; }
+
+    /* 스텝 바 */
+    .step-bar { padding: 12px 10px; }
+    .step-circle { width: 26px; height: 26px; font-size: 12px; }
+    .step-label { display: none; }
+    .step-line { margin: 0 2px; }
+
+    /* 카드 */
+    .card { padding: 16px; margin-bottom: 14px; }
+    .card-title { font-size: 14px; margin-bottom: 12px; }
+
+    /* 날짜 */
+    .date-row { grid-template-columns: 1fr; gap: 10px; }
+    .date-group input { font-size: 15px; padding: 12px 14px; }
+    .nights-badge { font-size: 13px; padding: 6px 14px; }
+
+    /* 사이트 그리드 */
+    .site-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .site-btn-img { height: 70px; }
+    .site-btn .site-num { font-size: 13px; }
+    .site-btn .site-view { font-size: 9px; }
+    .site-btn .site-status { font-size: 9px; }
+    .site-btn-body { padding: 5px 4px 7px; }
+    /* 편의시설 */
+    .fac-grid { grid-template-columns: 1fr; gap: 10px; }
+    .fac-section { padding: 36px 16px; }
+
+    /* 폼 */
+    .form-grid { grid-template-columns: 1fr; gap: 12px; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea { font-size: 16px; padding: 12px 14px; } /* 16px 이상이어야 iOS 자동 확대 방지 */
+
+    /* 가격 요약 */
+    .price-box { padding: 12px; }
+    .price-row { font-size: 13px; }
+    .price-row.total { font-size: 16px; }
+
+    /* 계좌 안내 */
+    .account-num { font-size: 16px; }
+
+    /* 버튼 */
+    .btn-primary { font-size: 16px; padding: 15px; }
+    .btn-secondary { font-size: 14px; padding: 11px 18px; }
+    .nav-btns { margin-top: 12px; }
+
+    /* 완료 화면 */
+    .success-card { padding: 28px 16px; }
+    .success-title { font-size: 18px; }
+    .confirm-row { font-size: 13px; }
+
+    /* 안내 박스 */
+    .notice-box { padding: 12px 14px; }
+    .notice-box p { font-size: 12px; }
+
+    /* 범례 */
+    .site-legend { gap: 10px; }
+    .legend-item { font-size: 11px; }
+  }
+
+  /* 아주 작은 화면 (320px 이하) */
+  @media (max-width: 360px) {
+    .site-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .site-btn { padding: 12px 2px; }
+    .site-btn .site-num { font-size: 13px; }
+    .hero h1 { font-size: 19px; }
+  }
+</style>
+</head>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-svg-wrap">
+        <svg viewBox="0 0 680 420" xmlns="http://www.w3.org/2000/svg">
+          <line x1="340" y1="100" x2="184" y2="190" stroke="rgba(255,255,255,0.9)" stroke-width="14" stroke-linecap="round"/>
+          <line x1="340" y1="100" x2="496" y2="190" stroke="rgba(255,255,255,0.9)" stroke-width="14" stroke-linecap="round"/>
+          <line x1="184" y1="190" x2="184" y2="250" stroke="rgba(255,255,255,0.9)" stroke-width="14" stroke-linecap="round"/>
+          <line x1="496" y1="190" x2="496" y2="250" stroke="rgba(255,255,255,0.9)" stroke-width="14" stroke-linecap="round"/>
+          <line x1="184" y1="250" x2="262" y2="145" stroke="rgba(255,255,255,0.9)" stroke-width="14" stroke-linecap="round"/>
+          <line x1="496" y1="250" x2="418" y2="145" stroke="rgba(255,255,255,0.9)" stroke-width="14" stroke-linecap="round"/>
+        </svg>
+        <div class="logo-text-wrap"><span>나</span><span class="mid">아</span><span>정</span></div>
+      </div>
+    </div>
+    <div class="header-info">
+      입실 13:00 · 퇴실 12:00<br>
+      문의: 010-4904-0523
+    </div>
+  </div>
+</header>
+
+<div class="hero">
+  <!-- 슬라이드 배경 이미지 -->
+  <div class="hero-slides">
+    <div class="hero-slide active" style="background-image:url('camp1.jpg')"></div>
+    <div class="hero-slide" style="background-image:url('camp2.jpg')"></div>
+    <div class="hero-slide" style="background-image:url('camp3.jpg')"></div>
+  </div>
+  <!-- 어두운 오버레이 -->
+  <div class="hero-overlay"></div>
+  <!-- 텍스트 콘텐츠 -->
+  <div class="hero-content">
+    <div style="position:relative;width:200px;height:130px;margin-bottom:16px;">
+      <svg width="200" height="130" viewBox="0 0 680 420" xmlns="http://www.w3.org/2000/svg">
+        <line x1="340" y1="100" x2="184" y2="190" stroke="rgba(255,255,255,0.9)" stroke-width="14" stroke-linecap="round"/>
+        <line x1="340" y1="100" x2="496" y2="190" stroke="rgba(255,255,255,0.9)" stroke-width="14" stroke-linecap="round"/>
+        <line x1="184" y1="190" x2="184" y2="250" stroke="rgba(255,255,255,0.9)" stroke-width="14" stroke-linecap="round"/>
+        <line x1="496" y1="190" x2="496" y2="250" stroke="rgba(255,255,255,0.9)" stroke-width="14" stroke-linecap="round"/>
+        <line x1="184" y1="250" x2="262" y2="145" stroke="rgba(255,255,255,0.9)" stroke-width="14" stroke-linecap="round"/>
+        <line x1="496" y1="250" x2="418" y2="145" stroke="rgba(255,255,255,0.9)" stroke-width="14" stroke-linecap="round"/>
+      </svg>
+      <div style="position:absolute;bottom:18px;left:50%;transform:translateX(-50%);font-family:'Noto Serif KR',serif;font-size:26px;font-weight:300;color:rgba(255,255,255,0.9);letter-spacing:0.1em;display:flex;gap:4px;white-space:nowrap;">
+        <span>나</span><span style="font-weight:200;">아</span><span>정</span>
+      </div>
+    </div>
+    <div class="hero-badges">
+      <span class="hero-badge">⛺ 총 12개 사이트</span>
+      <span class="hero-badge">🌿 평일 50,000원 / 주말 65,000원</span>
+      <span class="hero-badge">✨ 2박 이상 할인</span>
+    </div>
+  </div>
+  <!-- 좌우 화살표 -->
+  <button class="hero-arrow left" onclick="slideMove(-1)">&#8249;</button>
+  <button class="hero-arrow right" onclick="slideMove(1)">&#8250;</button>
+  <!-- 인디케이터 점 -->
+  <div class="hero-dots">
+    <button class="hero-dot active" onclick="slideTo(0)"></button>
+    <button class="hero-dot" onclick="slideTo(1)"></button>
+    <button class="hero-dot" onclick="slideTo(2)"></button>
+  </div>
+</div>
+
+<!-- 편의시설 섹션 -->
+<div class="fac-section">
+  <div class="fac-section-inner">
+    <div class="fac-section-tag">Facilities</div>
+    <h2 class="fac-section-title">편리하고 <strong>깨끗한 시설</strong></h2>
+    <div class="fac-grid">
+      <div class="fac-card">
+        <div class="fac-icon">🏞</div>
+        <div class="fac-name">계곡</div>
+        <div class="fac-desc">캠핑장 바로 옆 맑고 시원한 계곡에서 물놀이를 즐기실 수 있습니다.</div>
+        <div class="fac-tags"><span class="fac-tag">물놀이</span><span class="fac-tag">자연</span></div>
+      </div>
+      <div class="fac-card">
+        <div class="fac-icon">🐾</div>
+        <div class="fac-name">반려견 놀이터</div>
+        <div class="fac-desc">소중한 반려견과 함께 뛰어놀 수 있는 전용 놀이터가 마련되어 있습니다.</div>
+        <div class="fac-tags"><span class="fac-tag">반려견 동반</span><span class="fac-tag">전용공간</span></div>
+      </div>
+      <div class="fac-card">
+        <div class="fac-icon">🚶</div>
+        <div class="fac-name">산책로</div>
+        <div class="fac-desc">울창한 숲 사이로 이어지는 산책로에서 자연의 여유로움을 만끽하세요.</div>
+        <div class="fac-tags"><span class="fac-tag">숲길</span><span class="fac-tag">힐링</span></div>
+      </div>
+      <div class="fac-card">
+        <div class="fac-icon">🚿</div>
+        <div class="fac-name">화장실 · 샤워실</div>
+        <div class="fac-desc">비데가 완비된 깨끗한 화장실과 온수 샤워실을 24시간 이용하실 수 있습니다.</div>
+        <div class="fac-tags"><span class="fac-tag">비데</span><span class="fac-tag">온수</span><span class="fac-tag">24시간</span></div>
+      </div>
+      <div class="fac-card">
+        <div class="fac-icon">🍳</div>
+        <div class="fac-name">개수대</div>
+        <div class="fac-desc">전자렌지, 공용 냉장고, 제빙기가 구비된 개수대에서 편리하게 이용하세요.</div>
+        <div class="fac-tags"><span class="fac-tag">전자렌지</span><span class="fac-tag">공용냉장고</span><span class="fac-tag">제빙기</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 주의사항 동의 팝업 -->
+<div class="notice-modal-bg" id="noticeModal">
+  <div class="notice-modal">
+    <div class="notice-modal-header">
+      <div>
+        <div class="notice-modal-header-title">📋 예약 전 주의사항 확인</div>
+        <div class="notice-modal-header-sub">아래 내용을 확인하고 동의 후 예약을 진행해주세요</div>
+      </div>
+    </div>
+    <div class="notice-modal-body">
+      <div class="notice-modal-item highlight">
+        <div class="notice-modal-item-icon">🔇</div>
+        <div>
+          <div class="notice-modal-item-title">소음 주의</div>
+          <div class="notice-modal-item-desc">나아정은 2인 기준 감성 캠핑장입니다. 큰 목소리, 음악, TV 소리는 볼륨을 낮게 유지해주세요.</div>
+        </div>
+      </div>
+      <div class="notice-modal-item highlight">
+        <div class="notice-modal-item-icon">🌙</div>
+        <div>
+          <div class="notice-modal-item-title">매너타임 준수</div>
+          <div class="notice-modal-item-desc">오후 10시 ~ 오전 7시는 매너타임입니다. 이 시간에는 정숙을 부탁드립니다.</div>
+        </div>
+      </div>
+      <div class="notice-modal-item">
+        <div class="notice-modal-item-icon">🐶</div>
+        <div>
+          <div class="notice-modal-item-title">반려견 짖음 주의</div>
+          <div class="notice-modal-item-desc">짖음이 심한 반려견은 각별히 주의 부탁드립니다. 다른 손님들의 휴식을 배려해주세요.</div>
+        </div>
+      </div>
+      <div class="notice-modal-item">
+        <div class="notice-modal-item-icon">🦮</div>
+        <div>
+          <div class="notice-modal-item-title">리드줄 필수</div>
+          <div class="notice-modal-item-desc">사이트 밖에서는 반드시 리드줄을 착용해주세요.</div>
+        </div>
+      </div>
+      <div class="notice-agree-box" id="noticeAgreeBox" onclick="toggleNoticeAgree()">
+        <div class="notice-agree-check"><span class="notice-agree-check-mark">✓</span></div>
+        <div class="notice-agree-text">위 주의사항을 모두 확인하였으며 이에 동의합니다</div>
+      </div>
+      <button class="notice-modal-btn" id="noticeConfirmBtn" onclick="confirmNotice()">예약 진행하기</button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- 스텝 바 -->
+  <div class="step-bar" id="stepBar">
+    <div class="step-item active" id="s1"><div class="step-circle">1</div><span class="step-label">날짜 · 사이트</span></div>
+    <div class="step-line"></div>
+    <div class="step-item pending" id="s2"><div class="step-circle">2</div><span class="step-label">예약자 정보</span></div>
+    <div class="step-line"></div>
+    <div class="step-item pending" id="s3"><div class="step-circle">3</div><span class="step-label">입금 안내</span></div>
+    <div class="step-line"></div>
+    <div class="step-item pending" id="s4"><div class="step-circle">4</div><span class="step-label">신청 완료</span></div>
+  </div>
+
+  <!-- STEP 1: 날짜 & 사이트 -->
+  <div class="screen active" id="step1">
+    <div class="card">
+      <div class="card-title">날짜 선택</div>
+      <div class="date-row">
+        <div class="date-group">
+          <label>입실일</label>
+          <input type="date" id="checkin" onchange="updateDates()">
+        </div>
+        <div class="date-group">
+          <label>퇴실일</label>
+          <input type="date" id="checkout" onchange="updateDates()">
+        </div>
+      </div>
+      <div id="nightsInfo"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">사이트 선택</div>
+      <div class="site-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green-dark)"></div>선택됨</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--white);border:1px solid var(--border)"></div>예약 가능</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#F0F0F0;border:1px solid #E0E0E0"></div>예약 불가</div>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--green-dark);margin-bottom:8px;margin-top:4px;">🌿 정원뷰 (1~7번) · 50,000원~</div>
+      <div class="site-grid" id="siteGridGarden" style="margin-bottom:16px;"></div>
+      <div style="font-size:12px;font-weight:600;color:#4a6e8a;margin-bottom:8px;">🏞 계곡뷰 (8~12번) · 55,000원~</div>
+      <div class="site-grid" id="siteGridValley" style="grid-template-columns:repeat(5,1fr);"></div>
+      <div id="siteGrid" style="display:none;"></div>
+    </div>
+
+    <button class="btn-primary" onclick="goStep(2)">다음 단계 →</button>
+
+    <div class="notice-box" style="margin-top:20px;">
+      <p>📌 예약은 1박 2일 이상부터 가능합니다.</p>
+      <p>📌 평일(월~목, 일) 50,000원 / 주말·공휴일 전날(금, 토) 65,000원</p>
+      <p>📌 2박 이상 예약 시 1박당 5,000원 추가 할인됩니다.</p>
+      <p>📌 입실 인원 1~2명 기본 / 3명 +10,000원</p>
+      <p>📌 반려견 기본 1견 포함 / 추가 1견당 +5,000원</p>
+      <p>📌 입실 13:00 / 퇴실 12:00 (익일)</p>
+    </div>
+
+    <!-- 환불 정책 -->
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">취소 · 환불 정책</div>
+      <div style="display:flex;flex-direction:column;gap:0;">
+        <div class="refund-row best">
+          <span class="refund-day">7일 전 취소</span>
+          <span class="refund-rate">100% 환불</span>
+        </div>
+        <div class="refund-row good">
+          <span class="refund-day">6일 전 취소</span>
+          <span class="refund-rate">70% 환불</span>
+        </div>
+        <div class="refund-row mid">
+          <span class="refund-day">3~5일 전 취소</span>
+          <span class="refund-rate">50% 환불</span>
+        </div>
+        <div class="refund-row low">
+          <span class="refund-day">2일 전 취소</span>
+          <span class="refund-rate">30% 환불</span>
+        </div>
+        <div class="refund-row none">
+          <span class="refund-day">1일 전 · 당일 취소</span>
+          <span class="refund-rate">환불 불가</span>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--text-light);margin-top:12px;line-height:1.6;">
+        ※ 취소 기준일은 입실일 기준이며, 취소 요청은 운영자에게 직접 연락해주세요.<br>
+        ※ 환불은 승인 후 3~5 영업일 이내 처리됩니다.
+      </p>
+    </div>
+  </div>
+
+  <!-- STEP 2: 예약자 정보 -->
+  <div class="screen" id="step2">
+    <div class="card">
+      <div class="card-title">예약 요약</div>
+      <div class="price-box" id="priceSummary"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">예약자 정보 입력</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>예약자 이름 *</label>
+          <input type="text" id="name" placeholder="홍길동">
+        </div>
+        <div class="form-group">
+          <label>연락처 *</label>
+          <input type="tel" id="phone" placeholder="010-0000-0000">
+        </div>
+        <div class="form-group">
+          <label>입실 인원 * <span style="font-size:11px;color:var(--text-light);">최대 3명</span></label>
+          <select id="guests">
+            <option value="">선택해주세요</option>
+            <option value="1명">1명</option>
+            <option value="2명" selected>2명 (기본)</option>
+            <option value="3명">3명</option>
+          </select>
+          <div id="guestHint" style="display:none;font-size:12px;color:#C17B3A;margin-top:4px;font-weight:500;">※ 3인은 가족에 한해 예약 가능합니다</div>
+        </div>
+        <div class="form-group">
+          <label>차량 번호</label>
+          <input type="text" id="car" placeholder="12가 3456 (선택)">
+        </div>
+        <div class="form-group full">
+          <label>반려견 동반 🐕 <span style="font-size:11px;color:var(--text-light);">기본 1견 포함 · 추가 1견당 5,000원</span></label>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:4px;">
+            <button type="button" onclick="changeDog(-1)" style="width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--white);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;">−</button>
+            <div style="text-align:center;min-width:80px;">
+              <div style="font-size:20px;font-weight:600;color:var(--green-dark);" id="dogCount">1</div>
+              <div style="font-size:11px;color:var(--text-light);" id="dogLabel">기본 포함</div>
+            </div>
+            <button type="button" onclick="changeDog(1)" style="width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--white);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;">+</button>
+            <div style="font-size:13px;color:var(--green-dark);font-weight:500;" id="dogFeeLabel"></div>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label>요청사항</label>
+          <textarea id="request" placeholder="특별한 요청사항이 있으시면 입력해주세요."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn-secondary" onclick="goStep(1)">← 이전</button>
+      <button class="btn-primary" style="width:auto;padding:13px 36px;" onclick="goStep(3)">다음 단계 →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: 입금 안내 -->
+  <div class="screen" id="step3">
+    <div class="card">
+      <div class="card-title">최종 결제 금액</div>
+      <div class="price-box" id="priceSummary2"></div>
+
+      <div class="account-box">
+        <div class="account-title">💳 입금 계좌 안내</div>
+        <div class="account-num">농협 356-1504-3277-83</div>
+        <div class="account-sub">예금주: 김막래</div>
+      </div>
+
+      <div class="notice-box" style="margin-bottom:16px;">
+        <p>📌 예약자 이름으로 입금해 주세요.</p>
+        <p>📌 입금 확인 후 운영자가 예약을 승인합니다.</p>
+        <p>📌 승인 완료 시 문자로 안내드립니다.</p>
+        <p>📌 미입금 시 24시간 후 예약이 자동 취소됩니다.</p>
+      </div>
+
+      <button class="btn-primary" onclick="goStep(4)">예약 신청 완료</button>
+    </div>
+
+    <div class="nav-btns" style="margin-top:0;">
+      <button class="btn-secondary" onclick="goStep(2)">← 이전</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: 완료 -->
+  <div class="screen" id="step4">
+    <div class="success-card">
+      <div class="success-icon">✅</div>
+      <div class="success-title">예약 신청이 완료되었습니다!</div>
+      <div class="success-sub">
+        입금 확인 후 운영자가 예약을 승인합니다.<br>
+        승인 완료 시 입력하신 연락처로 문자가 발송됩니다.
+      </div>
+
+      <div class="confirm-box" id="confirmBox"></div>
+
+      <div class="account-box">
+        <div class="account-title">💳 아직 입금 전이라면</div>
+        <div class="account-num">농협 356-1504-3277-83</div>
+        <div class="account-sub" id="confirmName">예금주: 김막래 · 예약자 이름으로 입금</div>
+      </div>
+
+      <button class="btn-primary" onclick="resetAll()" style="margin-top:20px;">새 예약하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── 슬라이드쇼 ──────────────────────────────
+  let slideIdx = 0;
+  const slides = document.querySelectorAll('.hero-slide');
+  const dots   = document.querySelectorAll('.hero-dot');
+  let slideTimer = null;
+
+  function slideTo(n) {
+    slides[slideIdx].classList.remove('active');
+    dots[slideIdx].classList.remove('active');
+    slideIdx = (n + slides.length) % slides.length;
+    slides[slideIdx].classList.add('active');
+    dots[slideIdx].classList.add('active');
+  }
+  function slideMove(dir) {
+    clearInterval(slideTimer);
+    slideTo(slideIdx + dir);
+    startSlideTimer();
+  }
+  function startSlideTimer() {
+    slideTimer = setInterval(() => slideTo(slideIdx + 1), 4000);
+  }
+  startSlideTimer();
+  // ────────────────────────────────────────────
+  const bookedSites = []; // 실제 운영 시작 — 예약된 사이트 없음
+  let selectedSite = null;
+  let dogCount = 1; // 기본 1견
+  const DOG_FEE = 5000; // 추가 1견당 요금
+  const PRICE_WEEKDAY = 50000;
+  const PRICE_WEEKEND = 65000;
+  const DISCOUNT = 5000;
+
+  // 반려견 카운터
+  function changeDog(delta) {
+    dogCount = Math.max(1, dogCount + delta);
+    const extra = dogCount - 1;
+    document.getElementById('dogCount').textContent = dogCount + '견';
+    document.getElementById('dogLabel').textContent = dogCount === 1 ? '기본 포함' : `기본+추가 ${extra}견`;
+    document.getElementById('dogFeeLabel').textContent = extra > 0 ? `+${(extra * DOG_FEE).toLocaleString()}원` : '추가 요금 없음';
+  }
+
+  // 2025년 대한민국 공휴일
+  const HOLIDAYS = new Set([
+    '2025-01-01','2025-01-28','2025-01-29','2025-01-30',
+    '2025-03-01','2025-05-05','2025-05-06','2025-06-06',
+    '2025-08-15','2025-10-03','2025-10-05','2025-10-06','2025-10-07','2025-10-08',
+    '2025-11-05','2025-12-25',
+    '2026-01-01','2026-01-01','2026-02-17','2026-02-18','2026-02-19',
+    '2026-03-01','2026-05-05','2026-05-25','2026-06-06',
+    '2026-08-15','2026-09-24','2026-09-25','2026-09-26',
+    '2026-10-03','2026-10-09','2026-12-25'
+  ]);
+
+  // 날짜를 YYYY-MM-DD 문자열로 안전하게 변환 (타임존 버그 방지)
+  function toDateStr(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  // 해당 날짜가 주말요금(65,000원)인지 판별
+  // ① 금(5), 토(6) → 65,000원
+  // ② 공휴일 전날(단, 공휴일 당일은 제외) → 65,000원
+  // ③ 공휴일 당일 → 50,000원 (평일 요금)
+  function isWeekendPrice(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const day = d.getDay();
+    // ③ 공휴일 당일이면 무조건 평일 요금
+    if (HOLIDAYS.has(dateStr)) return false;
+    // ① 금(5), 토(6) → 주말 요금
+    if (day === 5 || day === 6) return true;
+    // ② 다음날이 공휴일이면 → 공휴일 전날 요금
+    const next = new Date(d);
+    next.setDate(next.getDate() + 1);
+    return HOLIDAYS.has(toDateStr(next));
+  }
+
+  // 입실일 기준으로 박별 요금 배열 반환
+  // ex) 금~일 2박 → [65000, 65000] (금요일 박, 토요일 박)
+  function calcNightPrices(checkinStr, checkoutStr) {
+    const ci = new Date(checkinStr + 'T00:00:00');
+    const co = new Date(checkoutStr + 'T00:00:00');
+    const nights = Math.round((co - ci) / 86400000);
+    if (nights <= 0) return [];
+    const isMulti = nights >= 2;
+    const prices = [];
+    for (let i = 0; i < nights; i++) {
+      const d = new Date(ci);
+      d.setDate(d.getDate() + i);
+      const dateStr = formatDate(d);
+      const base = isWeekendPrice(dateStr) ? PRICE_WEEKEND : PRICE_WEEKDAY;
+      prices.push({ date: dateStr, base, discount: isMulti ? DISCOUNT : 0, final: base - (isMulti ? DISCOUNT : 0) });
+    }
+    return prices;
+  }
+
+  function getTotalPrice(checkinStr, checkoutStr) {
+    return calcNightPrices(checkinStr, checkoutStr).reduce((s, p) => s + p.final, 0);
+  }
+
+  // 날짜 초기값 설정
+  function initDates() {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dayAfter = new Date(today);
+    dayAfter.setDate(dayAfter.getDate() + 2);
+    document.getElementById('checkin').value = formatDate(tomorrow);
+    document.getElementById('checkout').value = formatDate(dayAfter);
+    updateDates();
+  }
+
+  function formatDate(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function getNights() {
+    const ci = document.getElementById('checkin').value;
+    const co = document.getElementById('checkout').value;
+    if (!ci || !co) return 0;
+    return calcNightPrices(ci, co).length;
+  }
+
+  function updateDates() {
+    const ci = document.getElementById('checkin').value;
+    const co = document.getElementById('checkout').value;
+    const infoEl = document.getElementById('nightsInfo');
+    const prices = calcNightPrices(ci, co);
+    if (prices.length >= 1) {
+      const total = prices.reduce((s, p) => s + p.final, 0);
+      const hasWeekend = prices.some(p => isWeekendPrice(p.date));
+      const hasWeekday = prices.some(p => !isWeekendPrice(p.date));
+      const isDiscount = prices.length >= 2;
+      let priceText = '';
+      if (hasWeekend && hasWeekday) priceText = ` · 평일 ${PRICE_WEEKDAY.toLocaleString()}원 / 주말 ${PRICE_WEEKEND.toLocaleString()}원`;
+      else if (hasWeekend) priceText = ` · 주말요금 ${PRICE_WEEKEND.toLocaleString()}원/박`;
+      else priceText = ` · 평일요금 ${PRICE_WEEKDAY.toLocaleString()}원/박`;
+      const discountText = isDiscount ? ` (연박할인 적용)` : '';
+      infoEl.innerHTML = `<span class="nights-badge">🌙 ${prices.length}박 ${prices.length+1}일${priceText}${discountText} · 합계 ${total.toLocaleString()}원</span>`;
+    } else {
+      infoEl.innerHTML = `<span class="nights-badge" style="background:#FFF3F3;color:#C62828;">1박 이상 선택해주세요</span>`;
+    }
+    renderSites();
+  }
+
+  function renderSites() {
+    const tarpSVG = `<svg width="100%" height="100%" viewBox="0 0 680 420" preserveAspectRatio="xMidYMid meet">
+      <line x1="340" y1="100" x2="184" y2="190" stroke="rgba(255,255,255,0.85)" stroke-width="14" stroke-linecap="round"/>
+      <line x1="340" y1="100" x2="496" y2="190" stroke="rgba(255,255,255,0.85)" stroke-width="14" stroke-linecap="round"/>
+      <line x1="184" y1="190" x2="184" y2="250" stroke="rgba(255,255,255,0.85)" stroke-width="14" stroke-linecap="round"/>
+      <line x1="496" y1="190" x2="496" y2="250" stroke="rgba(255,255,255,0.85)" stroke-width="14" stroke-linecap="round"/>
+      <line x1="184" y1="250" x2="262" y2="145" stroke="rgba(255,255,255,0.85)" stroke-width="14" stroke-linecap="round"/>
+      <line x1="496" y1="250" x2="418" y2="145" stroke="rgba(255,255,255,0.85)" stroke-width="14" stroke-linecap="round"/>
+    </svg>`;
+
+    function makeBtn(i) {
+      const isBooked = bookedSites.includes(i);
+      const isSelected = selectedSite === i;
+      const isGarden = i <= 7;
+      const btn = document.createElement('button');
+      btn.className = 'site-btn ' + (isBooked ? 'booked' : isSelected ? 'selected' : 'available');
+      btn.innerHTML = `
+        <div class="site-btn-img ${isGarden ? 'garden' : 'valley'}">${tarpSVG}</div>
+        <div class="site-btn-body">
+          <span class="site-num">${i}번</span>
+          <span class="site-view">${isGarden ? '정원뷰' : '계곡뷰'}</span>
+          <span class="site-status" style="color:${isBooked?'#AAA':isSelected?'var(--green-dark)':'var(--green-mid)'}">${isBooked ? '예약됨' : isSelected ? '선택됨 ✓' : '예약 가능'}</span>
+        </div>`;
+      if (!isBooked) btn.onclick = () => { selectedSite = i; renderSites(); };
+      return btn;
+    }
+
+    const garden = document.getElementById('siteGridGarden');
+    const valley = document.getElementById('siteGridValley');
+    garden.innerHTML = ''; valley.innerHTML = '';
+    for (let i = 1; i <= 7; i++) garden.appendChild(makeBtn(i));
+    for (let i = 8; i <= 12; i++) valley.appendChild(makeBtn(i));
+  }
+
+  function getGuestFee() {
+    const guests = document.getElementById('guests').value;
+    return guests === '3명' ? 10000 : 0;
+  }
+
+  function getDogFee() {
+    return Math.max(0, dogCount - 1) * DOG_FEE;
+  }
+
+  function getPriceSummaryHTML() {
+    const ci = document.getElementById('checkin').value;
+    const co = document.getElementById('checkout').value;
+    const prices = calcNightPrices(ci, co);
+    const stayTotal = prices.reduce((s, p) => s + p.final, 0);
+    const dogFee   = getDogFee();
+    const guestFee = getGuestFee();
+    const grandTotal = stayTotal + dogFee + guestFee;
+    const isDiscount = prices.length >= 2;
+    const discountBadge = isDiscount ? `<span class="discount-badge">연박 할인</span>` : '';
+
+    const hasMixed = prices.some(p => isWeekendPrice(p.date)) && prices.some(p => !isWeekendPrice(p.date));
+    const dayNames = ['일','월','화','수','목','금','토'];
+    let detailRows = '';
+    if (hasMixed) {
+      detailRows = prices.map(p => {
+        const d = new Date(p.date + 'T00:00:00');
+        const badge = isWeekendPrice(p.date)
+          ? `<span style="font-size:10px;background:#FFF3E0;color:#E65100;padding:1px 6px;border-radius:99px;margin-left:4px;">주말</span>`
+          : `<span style="font-size:10px;background:var(--green-pale);color:var(--green-dark);padding:1px 6px;border-radius:99px;margin-left:4px;">평일</span>`;
+        return `<div class="price-row" style="font-size:12px;color:var(--text-light);">
+          <span>${p.date} (${dayNames[d.getDay()]})${badge}</span>
+          <span>${p.final.toLocaleString()}원${isDiscount?' <span style="font-size:11px;color:#E65100;">-5,000</span>':''}</span>
+        </div>`;
+      }).join('');
+    }
+
+    const dogRow = dogFee > 0
+      ? `<div class="price-row"><span>🐕 반려견 추가 (${dogCount - 1}견)</span><span>+${dogFee.toLocaleString()}원</span></div>`
+      : `<div class="price-row"><span>🐕 반려견</span><span>${dogCount}견 (기본 포함)</span></div>`;
+
+    const guestRow = guestFee > 0
+      ? `<div class="price-row"><span>👥 인원 추가 (3명)</span><span>+${guestFee.toLocaleString()}원</span></div>`
+      : '';
+
+    return `
+      <div class="price-row"><span>사이트</span><span>${selectedSite}번</span></div>
+      <div class="price-row"><span>날짜</span><span>${ci} ~ ${co}</span></div>
+      <div class="price-row"><span>박수</span><span>${prices.length}박 ${prices.length+1}일 ${discountBadge}</span></div>
+      ${detailRows}
+      <div class="price-row"><span>숙박 요금</span><span>${stayTotal.toLocaleString()}원</span></div>
+      ${guestRow}
+      ${dogRow}
+      <div class="price-row total"><span>최종 합계</span><span>${grandTotal.toLocaleString()}원</span></div>
+    `;
+  }
+
+  function goStep(n) {
+    const ci = document.getElementById('checkin').value;
+    const co = document.getElementById('checkout').value;
+    // step1→step2 전에 주의사항 팝업
+    if (n === 2) {
+      if (!selectedSite) { alert('사이트를 선택해주세요.'); return; }
+      if (getNights() < 1) { alert('퇴실일은 입실일보다 늦어야 합니다.'); return; }
+      // 팝업 아직 동의 안 했으면 팝업 띄우기
+      if (!window._noticeAgreed) {
+        window._pendingStep = 2;
+        document.getElementById('noticeModal').classList.add('active');
+        return;
+      }
+      document.getElementById('priceSummary').innerHTML = getPriceSummaryHTML();
+    }
+    if (n === 3) {
+      const name = document.getElementById('name').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const guests = document.getElementById('guests').value;
+      if (!name) { alert('예약자 이름을 입력해주세요.'); return; }
+      if (!phone) { alert('연락처를 입력해주세요.'); return; }
+      if (!guests) { alert('입실 인원을 선택해주세요.'); return; }
+      document.getElementById('priceSummary2').innerHTML = getPriceSummaryHTML();
+    }
+    if (n === 4) {
+      const name = document.getElementById('name').value.trim();
+      const stayTotal = getTotalPrice(ci, co);
+      const dogFee   = getDogFee();
+      const guestFee = getGuestFee();
+      const grandTotal = stayTotal + dogFee + guestFee;
+      const bookingNum = 'NJ-' + Date.now().toString().slice(-6);
+      const dogText  = dogCount === 1 ? '1견 (기본)' : `${dogCount}견 (기본+추가 ${dogCount-1}견)`;
+      const guestsVal = document.getElementById('guests').value;
+      const phone = document.getElementById('phone').value.trim();
+      const car = document.getElementById('car').value.trim();
+      const request = document.getElementById('request').value.trim();
+
+      document.getElementById('confirmBox').innerHTML = `
+        <div class="confirm-row"><span>예약 번호</span><span>${bookingNum}</span></div>
+        <div class="confirm-row"><span>예약자</span><span>${name}</span></div>
+        <div class="confirm-row"><span>사이트</span><span>${selectedSite}번</span></div>
+        <div class="confirm-row"><span>입실</span><span>${ci} 13:00</span></div>
+        <div class="confirm-row"><span>퇴실</span><span>${co} 12:00</span></div>
+        <div class="confirm-row"><span>인원</span><span>${guestsVal}${guestFee>0?' (+10,000원)':''}</span></div>
+        <div class="confirm-row"><span>🐕 반려견</span><span>${dogText}${dogFee>0?' (+'+dogFee.toLocaleString()+'원)':''}</span></div>
+        <div class="confirm-row"><span>결제 금액</span><span style="font-weight:700;color:var(--green-dark)">${grandTotal.toLocaleString()}원</span></div>
+      `;
+      document.getElementById('confirmName').textContent = `예금주: 김막래 · ${name} 이름으로 입금해주세요`;
+
+      // ── EmailJS 알림 발송 ──────────────────────────
+      try {
+        emailjs.init('YOUR_PUBLIC_KEY'); // ← EmailJS 공개키 입력
+        emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', {
+          booking_num:  bookingNum,
+          name:         name,
+          phone:        phone,
+          site:         selectedSite + '번 (' + (selectedSite <= 7 ? '정원뷰' : '계곡뷰') + ')',
+          checkin:      ci + ' 13:00',
+          checkout:     co + ' 12:00',
+          guests:       guestsVal + (guestFee > 0 ? ' (+10,000원)' : ''),
+          dogs:         dogText + (dogFee > 0 ? ' (+' + dogFee.toLocaleString() + '원)' : ''),
+          amount:       grandTotal.toLocaleString() + '원',
+          car:          car || '없음',
+          request:      request || '없음',
+          to_email:     'gimmaglea8@gmail.com',
+        });
+        console.log('✅ 예약 알림 이메일 발송 성공');
+      } catch(e) {
+        console.warn('이메일 발송 실패 (설정 필요):', e);
+      }
+      // ─────────────────────────────────────────────
+    }
+
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('step' + n).classList.add('active');
+
+    for (let i = 1; i <= 4; i++) {
+      const el = document.getElementById('s' + i);
+      el.className = 'step-item ' + (i < n ? 'done' : i === n ? 'active' : 'pending');
+      if (i < n) el.querySelector('.step-circle').textContent = '✓';
+      else el.querySelector('.step-circle').textContent = i;
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function resetAll() {
+    selectedSite = null;
+    dogCount = 1;
+    changeDog(0);
+    initDates();
+    document.getElementById('name').value = '';
+    document.getElementById('phone').value = '';
+    document.getElementById('guests').value = '2명';
+    document.getElementById('car').value = '';
+    document.getElementById('request').value = '';
+    goStep(1);
+  }
+
+  // 주의사항 팝업
+  window._noticeAgreed = false;
+  window._pendingStep = null;
+
+  function toggleNoticeAgree() {
+    window._noticeAgreed = !window._noticeAgreed;
+    document.getElementById('noticeAgreeBox').classList.toggle('checked', window._noticeAgreed);
+    const btn = document.getElementById('noticeConfirmBtn');
+    btn.classList.toggle('active', window._noticeAgreed);
+  }
+
+  function confirmNotice() {
+    if (!window._noticeAgreed) return;
+    document.getElementById('noticeModal').classList.remove('active');
+    if (window._pendingStep) {
+      const step = window._pendingStep;
+      window._pendingStep = null;
+      document.getElementById('priceSummary').innerHTML = getPriceSummaryHTML();
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('step' + step).classList.add('active');
+      for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById('s' + i);
+        el.className = 'step-item ' + (i < step ? 'done' : i === step ? 'active' : 'pending');
+        if (i < step) el.querySelector('.step-circle').textContent = '✓';
+        else el.querySelector('.step-circle').textContent = i;
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  // 3인 가족 한정 안내
+  document.getElementById('guests').addEventListener('change', function() {
+    const hint = document.getElementById('guestHint');
+    if (this.value === '3명') {
+      hint.style.display = 'block';
+    } else {
+      hint.style.display = 'none';
+    }
+  });
+
+  initDates();
+  renderSites();
+  changeDog(0);
+</script>
+</body>
+</html>
