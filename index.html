@@ -648,7 +648,6 @@
   }
 </style>
 </head>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <body>
 
 <header>
@@ -1279,26 +1278,29 @@
       `;
       document.getElementById('confirmName').textContent = `예금주: 김막래 · ${name} 이름으로 입금해주세요`;
 
-      // ── EmailJS 알림 발송 ──────────────────────────
+      // ── 알리고 SMS 알림 발송 ──────────────────────────
       try {
-        emailjs.init('YOUR_PUBLIC_KEY'); // ← EmailJS 공개키 입력
-        emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', {
-          booking_num:  bookingNum,
-          name:         name,
-          phone:        phone,
-          site:         selectedSite + '번 (' + (selectedSite <= 7 ? '정원뷰' : '계곡뷰') + ')',
-          checkin:      ci + ' 13:00',
-          checkout:     co + ' 12:00',
-          guests:       guestsVal + (guestFee > 0 ? ' (+10,000원)' : ''),
-          dogs:         dogText + (dogFee > 0 ? ' (+' + dogFee.toLocaleString() + '원)' : ''),
-          amount:       grandTotal.toLocaleString() + '원',
-          car:          car || '없음',
-          request:      request || '없음',
-          to_email:     'gimmaglea8@gmail.com',
-        });
-        console.log('✅ 예약 알림 이메일 발송 성공');
+        fetch('/api/send-sms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bookingNum,
+            name,
+            phone,
+            site: selectedSite + '번 (' + (selectedSite <= 7 ? '정원뷰' : '계곡뷰') + ')',
+            checkin: ci + ' 13:00',
+            checkout: co + ' 12:00',
+            guests: guestsVal + (guestFee > 0 ? ' (+10,000원)' : ''),
+            dogs: dogText + (dogFee > 0 ? ' (+' + dogFee.toLocaleString() + '원)' : ''),
+            amount: grandTotal.toLocaleString() + '원',
+            car,
+            request,
+          })
+        }).then(r => r.json()).then(data => {
+          console.log('SMS 발송 결과:', data);
+        }).catch(e => console.warn('SMS 발송 실패:', e));
       } catch(e) {
-        console.warn('이메일 발송 실패 (설정 필요):', e);
+        console.warn('SMS 오류:', e);
       }
       // ─────────────────────────────────────────────
     }
