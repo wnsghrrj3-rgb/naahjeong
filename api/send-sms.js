@@ -8,9 +8,11 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { bookingNum, name, phone, site, checkin, checkout, guests, dogs, amount, car, request } = req.body;
+  const { bookingNum, name, phone, site, checkin, checkout, guests, dogs, amount, car, request, directPhone, directMsg } = req.body;
 
-  const msg = `[나아정] 새 예약 신청
+  // 관리자에서 직접 전송
+  const toPhone = directPhone ? directPhone.replace(/-/g, '') : '01088073372';
+  const msg = directMsg || `[나아정] 새 예약 신청
 예약번호: ${bookingNum}
 예약자: ${name} (${phone})
 사이트: ${site}
@@ -41,7 +43,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         message: {
-          to: '01088073372',
+          to: toPhone,
           from: '01088073372',
           text: msg,
           type: 'LMS'
