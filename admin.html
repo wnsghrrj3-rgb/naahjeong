@@ -169,8 +169,12 @@
       </div>
     </div>
     <div class="login-sub">관리자 페이지</div>
-    <div class="login-group"><label>아이디</label><input type="text" id="loginId" placeholder="admin" value="admin"></div>
+    <div class="login-group"><label>아이디</label><input type="text" id="loginId" placeholder="아이디"></div>
     <div class="login-group"><label>비밀번호</label><input type="password" id="loginPw" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+      <input type="checkbox" id="rememberMe" style="width:16px;height:16px;cursor:pointer;">
+      <label for="rememberMe" style="font-size:13px;color:var(--text-mid);cursor:pointer;">로그인 정보 저장</label>
+    </div>
     <button class="login-btn" onclick="doLogin()">로그인</button>
     <div class="login-hint">기본 계정: admin / 1234</div>
   </div>
@@ -337,14 +341,33 @@
   function doLogin() {
     const id = document.getElementById('loginId').value.trim();
     const pw = document.getElementById('loginPw').value.trim();
+    const remember = document.getElementById('rememberMe').checked;
     if (id === 'jorimi' && pw === '880630') {
+      if (remember) {
+        localStorage.setItem('nj_id', id);
+        localStorage.setItem('nj_pw', pw);
+      } else {
+        localStorage.removeItem('nj_id');
+        localStorage.removeItem('nj_pw');
+      }
       document.getElementById('loginWrap').style.display = 'none';
       document.getElementById('adminWrap').classList.add('active');
       initAdmin();
     } else {
-      alert('아이디 또는 비밀번호가 올바르지 않습니다.\n\n아이디: admin\n비밀번호: 1234');
+      alert('아이디 또는 비밀번호가 올바르지 않습니다.');
     }
   }
+
+  // 저장된 로그인 정보 자동 입력
+  window.addEventListener('DOMContentLoaded', () => {
+    const savedId = localStorage.getItem('nj_id');
+    const savedPw = localStorage.getItem('nj_pw');
+    if (savedId && savedPw) {
+      document.getElementById('loginId').value = savedId;
+      document.getElementById('loginPw').value = savedPw;
+      document.getElementById('rememberMe').checked = true;
+    }
+  });
 
   function doLogout() {
     document.getElementById('loginWrap').style.display = 'flex';
@@ -568,7 +591,7 @@
   // ── SMS 모달 ─────────────────────────────────────────
   function buildSmsText(r) {
     const nights = nightCount(r);
-    return `[나아정 캠핑장] 예약 확정 안내\n\n안녕하세요, ${r.name}님!\n예약이 확정되었습니다 🏕️\n\n▶ 예약번호: ${r.id}\n▶ 사이트: ${r.site}번\n▶ 입실: ${r.checkin} (오후 1시)\n▶ 퇴실: ${r.checkout} (낮 12시)\n▶ 인원: ${r.guests}\n▶ 이용 기간: ${nights}박 ${nights+1}일\n▶ 결제금액: ${r.amount.toLocaleString()}원\n\n오시는 길 및 문의:\n📞 010-4904-0523\n\n자연 속에서 즐거운 시간 되세요!\n감사합니다 🌿`;
+    return `[나아정 캠핑장] 예약 확정 안내\n\n안녕하세요, ${r.name}님!\n예약이 확정되었습니다 🏕️\n\n▶ 예약번호: ${r.id}\n▶ 사이트: ${r.site}번\n▶ 입실: ${r.checkin} (오후 1시)\n▶ 퇴실: ${r.checkout} (낮 12시)\n▶ 인원: ${r.guests}\n▶ 이용 기간: ${nights}박 ${nights+1}일\n▶ 결제금액: ${r.amount.toLocaleString()}원\n\n오시는 길 및 문의:\n📞 010-8807-3372\n\n자연 속에서 즐거운 시간 되세요!\n감사합니다 🌿`;
   }
 
   function openSmsModal(id) {
