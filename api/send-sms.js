@@ -42,7 +42,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         message: {
           to: '01088073372',
-          from: '01049040523',
+          from: '01088073372',
           text: msg,
           type: 'LMS'
         }
