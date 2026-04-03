@@ -301,8 +301,8 @@
       <textarea id="smsMsgEdit" rows="6" oninput="updateSmsPreview()" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;background:var(--cream);"></textarea>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="modal-btn modal-btn-primary" onclick="copySms()" style="flex:1;min-width:140px;">📋 문자 내용 복사</button>
-      <button class="modal-btn" onclick="openKakaoSms()" style="flex:1;min-width:140px;background:#FEE500;color:#191919;border:none;font-weight:600;border-radius:var(--radius-sm);cursor:pointer;">카카오톡으로 보내기</button>
+      <button class="modal-btn modal-btn-primary" onclick="sendSmsNow()" style="flex:1;min-width:140px;">📱 문자 전송</button>
+      <button class="modal-btn" onclick="copySms()" style="flex:1;min-width:140px;background:var(--green-pale);color:var(--green-dark);border:none;font-weight:600;border-radius:var(--radius-sm);cursor:pointer;">📋 내용 복사</button>
     </div>
     <div id="copiedMsg" style="text-align:center;font-size:13px;color:var(--green-mid);margin-top:10px;display:none;">✅ 복사되었습니다!</div>
     <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px;">
@@ -337,7 +337,7 @@
   function doLogin() {
     const id = document.getElementById('loginId').value.trim();
     const pw = document.getElementById('loginPw').value.trim();
-    if (id === 'admin' && pw === '880630') {
+    if (id === 'jorimi' && pw === '880630') {
       document.getElementById('loginWrap').style.display = 'none';
       document.getElementById('adminWrap').classList.add('active');
       initAdmin();
@@ -609,7 +609,35 @@
     window.open(`sms:${phone}?body=${msg}`, '_blank');
   }
 
-  function closeSmsModal() { document.getElementById('smsModalBg').classList.remove('open'); }
+  async function sendSmsNow() {
+    const phone = document.getElementById('smsPhone').value;
+    const msg = document.getElementById('smsMsgEdit').value;
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = '전송 중...';
+    try {
+      const response = await fetch('/api/send-sms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ directPhone: phone, directMsg: msg })
+      });
+      const data = await response.json();
+      if (data.success) {
+        document.getElementById('copiedMsg').textContent = '✅ 문자가 전송되었습니다!';
+        document.getElementById('copiedMsg').style.display = 'block';
+        setTimeout(() => document.getElementById('copiedMsg').style.display = 'none', 3000);
+      } else {
+        alert('문자 전송 실패: ' + (data.message || '오류 발생'));
+      }
+    } catch(e) {
+      alert('문자 전송 오류: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '📱 문자 전송';
+    }
+  }
+
+  
 
   // ── 달력 ─────────────────────────────────────────────
   function renderCalendar() {
